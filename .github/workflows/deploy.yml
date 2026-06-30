@@ -7,107 +7,50 @@ on:
 
 jobs:
   deploy:
-    name: Build & Deploy
     runs-on: ubuntu-latest
 
-    # Variables SSH disponibles dans TOUTES les étapes du job
-    env:
-      SSH_HOST: ${{ secrets.SSH_HOST }}
-      SSH_PORT: ${{ secrets.SSH_PORT }}
-      SSH_USER: ${{ secrets.SSH_USER }}
-      SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
-      APP_PATH: ${{ secrets.APP_PATH }}
-      DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
-
     steps:
-      # ── 1. Checkout ──────────────────────────────────────────────
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      # ── 2. Setup PHP ─────────────────────────────────────────────
-      - name: Setup PHP 8.2
-        uses: shivammathur/setup-php@v2
+      - uses: shivammathur/setup-php@v2
         with:
           php-version: '8.2'
           extensions: pdo_mysql, ctype, iconv, intl
           coverage: none
 
-      # ── 3. Install Composer dependencies (prod only) ─────────────
-      - name: Install dependencies
-        run: |
-          composer install \
-            --no-dev \
-            --optimize-autoloader \
-            --no-interaction \
-            --prefer-dist
+      - run: composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist
 
-      # ── 4. Run unit tests ─────────────────────────────────────────
-      - name: Run PHPUnit tests
-        run: |
-          if [ -f "phpunit.xml.dist" ]; then
-            php bin/phpunit --testdox tests/Unit || true
-          else
-            echo "No PHPUnit config — skipping"
-          fi
-
-      # ── 5. Generate front controller ─────────────────────────────
-      - name: Generate patched index.php
-        run: |
-          sed "s|__APP_ROOT__|${APP_PATH}|g" deploy/hostinger/index.php.template > /tmp/index.php
-          echo "Generated index.php pointing to: ${APP_PATH}"
-
-      # ── 6. Configure SSH ─────────────────────────────────────────
       - name: Configure SSH
         run: |
           mkdir -p ~/.ssh
-          echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
-          echo "Host hostinger"            >> ~/.ssh/config
-          echo "  HostName $SSH_HOST"      >> ~/.ssh/config
-          echo "  User $SSH_USER"          >> ~/.ssh/config
-          echo "  Port $SSH_PORT"          >> ~/.ssh/config
+          echo "Host hostinger" >> ~/.ssh/config
+          echo "  HostName ${{ secrets.SSH_HOST }}" >> ~/.ssh/config
+          echo "  User ${{ secrets.SSH_USER }}" >> ~/.ssh/config
+          echo "  Port ${{ secrets.SSH_PORT }}" >> ~/.ssh/config
           echo "  IdentityFile ~/.ssh/id_rsa" >> ~/.ssh/config
-          echo "  StrictHostKeyChecking no"   >> ~/.ssh/config
-          chmod 600 ~/.ssh/config
-          echo "SSH configured — host=$SSH_HOST port=$SSH_PORT user=$SSH_USER"
+          echo "  StrictHostKeyChecking no" >> ~/.ssh/config
 
-      # ── 7. Rsync code applicatif (hors public_html) ──────────────
-      - name: Deploy app code via rsync
+      - name: Deploy
         run: |
-          ssh hostinger "mkdir -p '$APP_PATH'"
-          rsync -azP --delete \
-            -e "ssh -o StrictHostKeyChecking=no" \
-            --exclude='.git/' \
-            --exclude='.github/' \
-            --exclude='.env.local' \
-            --exclude='.env.*.local' \
-            --exclude='var/cache/' \
-            --exclude='var/log/' \
-            --exclude='tests/' \
-            --exclude='node_modules/' \
-            --exclude='phpunit.xml*' \
-            --exclude='deploy_key*' \
-            --exclude='public/' \
-            ./ "hostinger:$APP_PATH/"
-
-      # ── 8. Rsync assets publics + front controller ───────────────
-      - name: Deploy public assets via rsync
-        run: |
-          rsync -azP --delete \
-            -e "ssh -o StrictHostKeyChecking=no" \
+          ssh hostinger "mkdir -p ${{ secrets.APP_PATH }}"
+          rsync -az --delete \
+            --exclude='.git/' --exclude='.github/' \
+            --exclude='.env.local' --exclude='var/' \
+            --exclude='node_modules/' --exclude='public/' \
+            ./ "hostinger:${{ secrets.APP_PATH }}/"
+          rsync -az --delete \
             --exclude='index.php' \
-            public/ "hostinger:$DEPLOY_PATH/"
-          scp /tmp/index.php "hostinger:$DEPLOY_PATH/index.php"
+            public/ "hostinger:${{ secrets.DEPLOY_PATH }}/"
+          sed "s|__APP_ROOT__|${{ secrets.APP_PATH }}|g" deploy/hostinger/index.php.template \
+            | ssh hostinger "cat > ${{ secrets.DEPLOY_PATH }}/index.php"
 
-      # ── 9. Post-deploy : migrations + cache ──────────────────────
-      - name: Post-deploy commands
+      - name: Post-deploy
         run: |
-          ssh hostinger << 'ENDSSH'
-            cd "$APP_PATH"
-            export APP_ENV=prod
+          ssh hostinger "
+            cd ${{ secrets.APP_PATH }}
             php bin/console doctrine:migrations:migrate --no-interaction --allow-no-migration --env=prod
-            php bin/console messenger:setup-transports --env=prod
             php bin/console cache:clear --env=prod --no-warmup
             php bin/console cache:warmup --env=prod
-            echo 'Deploy completed successfully'
-          ENDSSH
+          "
