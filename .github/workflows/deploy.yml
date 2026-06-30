@@ -62,18 +62,25 @@ jobs:
           mkdir -p ~/.ssh
           echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
-          # Fallback port 65002 si SSH_PORT vide
           PORT="${SSH_PORT:-65002}"
-          ssh-keyscan -p "$PORT" -H "$SSH_HOST" >> ~/.ssh/known_hosts
-          echo "SSH configured — host=$SSH_HOST port=$PORT"
+          # Config SSH : désactive StrictHostKeyChecking (firewall Hostinger bloque keyscan)
+          cat >> ~/.ssh/config << EOF
+          Host $SSH_HOST
+            Port $PORT
+            User $SSH_USER
+            IdentityFile ~/.ssh/id_rsa
+            StrictHostKeyChecking no
+            UserKnownHostsFile /dev/null
+          EOF
+          chmod 600 ~/.ssh/config
+          echo "SSH configured — host=$SSH_HOST port=$PORT user=$SSH_USER"
 
       # ── 7. Rsync code applicatif (hors public_html) ──────────────
       - name: Deploy app code via rsync
         run: |
-          PORT="${SSH_PORT:-65002}"
-          ssh -p "$PORT" "$SSH_USER@$SSH_HOST" "mkdir -p '$APP_PATH'"
+          ssh "$SSH_USER@$SSH_HOST" "mkdir -p '$APP_PATH'"
           rsync -azP --delete \
-            -e "ssh -p $PORT" \
+            -e "ssh" \
             --exclude='.git/' \
             --exclude='.github/' \
             --exclude='.env.local' \
@@ -90,18 +97,16 @@ jobs:
       # ── 8. Rsync assets publics + front controller ───────────────
       - name: Deploy public assets via rsync
         run: |
-          PORT="${SSH_PORT:-65002}"
           rsync -azP --delete \
-            -e "ssh -p $PORT" \
+            -e "ssh" \
             --exclude='index.php' \
             public/ "$SSH_USER@$SSH_HOST:$DEPLOY_PATH/"
-          scp -P "$PORT" /tmp/index.php "$SSH_USER@$SSH_HOST:$DEPLOY_PATH/index.php"
+          scp /tmp/index.php "$SSH_USER@$SSH_HOST:$DEPLOY_PATH/index.php"
 
       # ── 9. Post-deploy : migrations + cache ──────────────────────
       - name: Post-deploy commands
         run: |
-          PORT="${SSH_PORT:-65002}"
-          ssh -p "$PORT" "$SSH_USER@$SSH_HOST" \
+          ssh "$SSH_USER@$SSH_HOST" \
             "cd '$APP_PATH' && \
              export APP_ENV=prod && \
              php bin/console doctrine:migrations:migrate --no-interaction --env=prod && \
