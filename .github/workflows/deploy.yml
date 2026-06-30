@@ -10,6 +10,15 @@ jobs:
     name: Build & Deploy
     runs-on: ubuntu-latest
 
+    # Variables SSH disponibles dans TOUTES les étapes du job
+    env:
+      SSH_HOST: ${{ secrets.SSH_HOST }}
+      SSH_PORT: ${{ secrets.SSH_PORT }}
+      SSH_USER: ${{ secrets.SSH_USER }}
+      SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+      APP_PATH: ${{ secrets.APP_PATH }}
+      DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
+
     steps:
       # ── 1. Checkout ──────────────────────────────────────────────
       - name: Checkout code
@@ -32,44 +41,39 @@ jobs:
             --no-interaction \
             --prefer-dist
 
-      # ── 4. Run unit tests before deploy ──────────────────────────
+      # ── 4. Run unit tests ─────────────────────────────────────────
       - name: Run PHPUnit tests
         run: |
           if [ -f "phpunit.xml.dist" ]; then
             php bin/phpunit --testdox tests/Unit || true
           else
-            echo "No PHPUnit config found — skipping tests"
+            echo "No PHPUnit config — skipping"
           fi
 
-      # ── 5. Generate front controller for the public document root ─
-      # DEPLOY_PATH (public_html/acquis) EST le document root exposé (pas de
-      # sous-dossier public/ possible sur ce plan Hostinger) → le code
-      # applicatif est déployé HORS de public_html, dans APP_PATH, et seul
-      # un index.php généré dans DEPLOY_PATH pointe dessus.
+      # ── 5. Generate front controller ─────────────────────────────
       - name: Generate patched index.php
-        env:
-          APP_PATH: ${{ secrets.APP_PATH }}
         run: |
           sed "s|__APP_ROOT__|${APP_PATH}|g" deploy/hostinger/index.php.template > /tmp/index.php
+          echo "Generated index.php pointing to: ${APP_PATH}"
 
-      # ── 6. Rsync application code (privé, hors public_html) ──────
-      - name: Deploy app code via rsync
-        env:
-          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
-          SSH_HOST:  ${{ secrets.SSH_HOST }}
-          SSH_PORT:  ${{ secrets.SSH_PORT }}
-          SSH_USER:  ${{ secrets.SSH_USER }}
-          APP_PATH:  ${{ secrets.APP_PATH }}
+      # ── 6. Configure SSH ─────────────────────────────────────────
+      - name: Configure SSH
         run: |
           mkdir -p ~/.ssh
           echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
-          ssh-keyscan -p "$SSH_PORT" -H "$SSH_HOST" >> ~/.ssh/known_hosts
+          # Fallback port 65002 si SSH_PORT vide
+          PORT="${SSH_PORT:-65002}"
+          ssh-keyscan -p "$PORT" -H "$SSH_HOST" >> ~/.ssh/known_hosts
+          echo "SSH configured — host=$SSH_HOST port=$PORT"
 
-          ssh -p "$SSH_PORT" "$SSH_USER@$SSH_HOST" "mkdir -p '$APP_PATH'"
-
+      # ── 7. Rsync code applicatif (hors public_html) ──────────────
+      - name: Deploy app code via rsync
+        run: |
+          PORT="${SSH_PORT:-65002}"
+          ssh -p "$PORT" "$SSH_USER@$SSH_HOST" "mkdir -p '$APP_PATH'"
           rsync -azP --delete \
-            -e "ssh -p $SSH_PORT" \
+            -e "ssh -p $PORT" \
             --exclude='.git/' \
             --exclude='.github/' \
             --exclude='.env.local' \
@@ -79,44 +83,29 @@ jobs:
             --exclude='tests/' \
             --exclude='node_modules/' \
             --exclude='phpunit.xml*' \
+            --exclude='deploy_key*' \
             --exclude='public/' \
             ./ "$SSH_USER@$SSH_HOST:$APP_PATH/"
 
-      # ── 7. Rsync assets publics (css/js/images) vers public_html/acquis ─
+      # ── 8. Rsync assets publics + front controller ───────────────
       - name: Deploy public assets via rsync
-        env:
-          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
-          SSH_HOST:     ${{ secrets.SSH_HOST }}
-          SSH_PORT:     ${{ secrets.SSH_PORT }}
-          SSH_USER:     ${{ secrets.SSH_USER }}
-          DEPLOY_PATH:  ${{ secrets.DEPLOY_PATH }}
         run: |
+          PORT="${SSH_PORT:-65002}"
           rsync -azP --delete \
-            -e "ssh -p $SSH_PORT" \
+            -e "ssh -p $PORT" \
             --exclude='index.php' \
             public/ "$SSH_USER@$SSH_HOST:$DEPLOY_PATH/"
+          scp -P "$PORT" /tmp/index.php "$SSH_USER@$SSH_HOST:$DEPLOY_PATH/index.php"
 
-          # Déposer le front controller patché (chemin app code injecté)
-          scp -P "$SSH_PORT" /tmp/index.php "$SSH_USER@$SSH_HOST:$DEPLOY_PATH/index.php"
-
-      # ── 8. Post-deploy : migrations + cache:clear ─────────────────
+      # ── 9. Post-deploy : migrations + cache ──────────────────────
       - name: Post-deploy commands
-        env:
-          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
-          SSH_HOST:  ${{ secrets.SSH_HOST }}
-          SSH_PORT:  ${{ secrets.SSH_PORT }}
-          SSH_USER:  ${{ secrets.SSH_USER }}
-          APP_PATH:  ${{ secrets.APP_PATH }}
         run: |
-          ssh -p "$SSH_PORT" "$SSH_USER@$SSH_HOST" "APP_PATH='$APP_PATH' bash -s" << 'ENDSSH'
-            set -e
-            cd "$APP_PATH"
-            export APP_ENV=prod
-
-            php bin/console doctrine:migrations:migrate --no-interaction --env=prod
-            php bin/console messenger:setup-transports --env=prod
-            php bin/console cache:clear --env=prod --no-warmup
-            php bin/console cache:warmup --env=prod
-
-            echo "Deploy completed successfully"
-          ENDSSH
+          PORT="${SSH_PORT:-65002}"
+          ssh -p "$PORT" "$SSH_USER@$SSH_HOST" \
+            "cd '$APP_PATH' && \
+             export APP_ENV=prod && \
+             php bin/console doctrine:migrations:migrate --no-interaction --env=prod && \
+             php bin/console messenger:setup-transports --env=prod && \
+             php bin/console cache:clear --env=prod --no-warmup && \
+             php bin/console cache:warmup --env=prod && \
+             echo 'Deploy completed successfully'"
