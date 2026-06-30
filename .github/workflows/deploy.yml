@@ -62,25 +62,23 @@ jobs:
           mkdir -p ~/.ssh
           echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
-          PORT="${SSH_PORT:-65002}"
-          # Config SSH : désactive StrictHostKeyChecking (firewall Hostinger bloque keyscan)
-          cat >> ~/.ssh/config << EOF
-          Host $SSH_HOST
-            Port $PORT
+          cat >> ~/.ssh/config <<-EOF
+          Host hostinger
+            HostName $SSH_HOST
             User $SSH_USER
+            Port $SSH_PORT
             IdentityFile ~/.ssh/id_rsa
             StrictHostKeyChecking no
-            UserKnownHostsFile /dev/null
           EOF
           chmod 600 ~/.ssh/config
-          echo "SSH configured — host=$SSH_HOST port=$PORT user=$SSH_USER"
+          echo "SSH configured — host=$SSH_HOST port=$SSH_PORT user=$SSH_USER"
 
       # ── 7. Rsync code applicatif (hors public_html) ──────────────
       - name: Deploy app code via rsync
         run: |
-          ssh "$SSH_USER@$SSH_HOST" "mkdir -p '$APP_PATH'"
+          ssh hostinger "mkdir -p '$APP_PATH'"
           rsync -azP --delete \
-            -e "ssh" \
+            -e "ssh -o StrictHostKeyChecking=no" \
             --exclude='.git/' \
             --exclude='.github/' \
             --exclude='.env.local' \
@@ -92,25 +90,26 @@ jobs:
             --exclude='phpunit.xml*' \
             --exclude='deploy_key*' \
             --exclude='public/' \
-            ./ "$SSH_USER@$SSH_HOST:$APP_PATH/"
+            ./ "hostinger:$APP_PATH/"
 
       # ── 8. Rsync assets publics + front controller ───────────────
       - name: Deploy public assets via rsync
         run: |
           rsync -azP --delete \
-            -e "ssh" \
+            -e "ssh -o StrictHostKeyChecking=no" \
             --exclude='index.php' \
-            public/ "$SSH_USER@$SSH_HOST:$DEPLOY_PATH/"
-          scp /tmp/index.php "$SSH_USER@$SSH_HOST:$DEPLOY_PATH/index.php"
+            public/ "hostinger:$DEPLOY_PATH/"
+          scp /tmp/index.php "hostinger:$DEPLOY_PATH/index.php"
 
       # ── 9. Post-deploy : migrations + cache ──────────────────────
       - name: Post-deploy commands
         run: |
-          ssh "$SSH_USER@$SSH_HOST" \
-            "cd '$APP_PATH' && \
-             export APP_ENV=prod && \
-             php bin/console doctrine:migrations:migrate --no-interaction --env=prod && \
-             php bin/console messenger:setup-transports --env=prod && \
-             php bin/console cache:clear --env=prod --no-warmup && \
-             php bin/console cache:warmup --env=prod && \
-             echo 'Deploy completed successfully'"
+          ssh hostinger << 'ENDSSH'
+            cd "$APP_PATH"
+            export APP_ENV=prod
+            php bin/console doctrine:migrations:migrate --no-interaction --allow-no-migration --env=prod
+            php bin/console messenger:setup-transports --env=prod
+            php bin/console cache:clear --env=prod --no-warmup
+            php bin/console cache:warmup --env=prod
+            echo 'Deploy completed successfully'
+          ENDSSH
