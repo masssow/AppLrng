@@ -1,0 +1,74 @@
+{% extends 'base.html.twig' %}
+{% block title %}{{ 'parcours.new.title'|trans }}{% endblock %}
+
+{% block body %}
+<main class="p-4 max-w-xl mx-auto">
+    <h1 class="text-2xl font-bold mb-6">{{ 'parcours.new.title'|trans }}</h1>
+
+    {{ form_start(form, {'attr': {'class': 'space-y-5'}}) }}
+
+        <div>
+            {{ form_label(form.titre, null, {'label_attr': {'class': 'block text-sm text-white/70 mb-1'}}) }}
+            {{ form_widget(form.titre, {'attr': {
+                'class': 'w-full bg-white/10 border border-white/20 rounded-lg px-4 py-3 text-white placeholder-white/30 focus:outline-none focus:border-[#6C63FF]'
+            }}) }}
+            {{ form_errors(form.titre) }}
+        </div>
+
+        <div>
+            {{ form_label(form.objectif, null, {'label_attr': {'class': 'block text-sm text-white/70 mb-1'}}) }}
+            {{ form_widget(form.objectif, {'attr': {
+                'class': 'w-full bg-white/10 border border-white/20 rounded-lg px-4 py-3 text-white placeholder-white/30 focus:outline-none focus:border-[#6C63FF] resize-none',
+                'rows': '3'
+            }}) }}
+            {{ form_errors(form.objectif) }}
+        </div>
+
+        <div>
+            {{ form_label(form.domaine, null, {'label_attr': {'class': 'block text-sm text-white/70 mb-1'}}) }}
+            {{ form_widget(form.domaine, {'attr': {
+                'class': 'w-full bg-[#1a1a2e] border border-white/20 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-[#6C63FF] appearance-none cursor-pointer'
+            }}) }}
+            {{ form_errors(form.domaine) }}
+        </div>
+
+        <div>
+            {{ form_label(form.niveau, null, {'label_attr': {'class': 'block text-sm text-white/70 mb-1'}}) }}
+            {{ form_widget(form.niveau, {'attr': {
+                'class': 'w-full bg-[#1a1a2e] border border-white/20 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-[#6C63FF] appearance-none cursor-pointer'
+            }}) }}
+            {{ form_errors(form.niveau) }}
+        </div>
+
+        <div>
+            {{ form_label(form.modeAccompagnement, null, {'label_attr': {'class': 'block text-sm text-white/70 mb-1'}}) }}
+            {{ form_widget(form.modeAccompagnement, {'attr': {
+                'class': 'w-full bg-[#1a1a2e] border border-white/20 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-[#6C63FF] appearance-none cursor-pointer'
+            }}) }}
+            {{ form_errors(form.modeAccompagnement) }}
+        </div>
+
+        <div>
+            {{ form_label(form.dureeCibleSemaines, null, {'label_attr': {'class': 'block text-sm text-white/70 mb-1'}}) }}
+            {{ form_widget(form.dureeCibleSemaines, {'attr': {
+                'class': 'w-full bg-white/10 border border-white/20 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-[#6C63FF]',
+                'min': '1',
+                'max': '52'
+            }}) }}
+            {{ form_errors(form.dureeCibleSemaines) }}
+        </div>
+
+        <button type="submit"
+            class="w-full bg-[#6C63FF] hover:bg-[#5a52e0] text-white font-semibold py-3 rounded-lg transition mt-2">
+            {{ 'action.create'|trans }}
+        </button>
+
+    {{ form_end(form) }}
+</main>
+{% endblock %}
+
+{% block head %}
+<style>
+    select option { background-color: #1a1a2e; color: white; }
+</style>
+{% endblock %}

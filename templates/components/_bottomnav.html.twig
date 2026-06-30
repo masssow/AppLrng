@@ -1,0 +1,14 @@
+<nav class="md:hidden fixed bottom-0 left-0 right-0 z-30 h-16 bg-[#0A0A0F] border-t border-white/10 flex items-center justify-around">
+    <a href="{{ path('app_dashboard') }}" class="flex flex-col items-center gap-1 text-xs text-white/60 hover:text-[#6C63FF]">
+        <span class="text-xl">🏠</span>
+        {{ 'nav.dashboard'|trans }}
+    </a>
+    <a href="{{ path('app_parcours_index') }}" class="flex flex-col items-center gap-1 text-xs text-white/60 hover:text-[#6C63FF]">
+        <span class="text-xl">📚</span>
+        {{ 'nav.parcours'|trans }}
+    </a>
+    <a href="{{ path('app_revision_index') }}" class="flex flex-col items-center gap-1 text-xs text-white/60 hover:text-[#6C63FF]">
+        <span class="text-xl">🔄</span>
+        {{ 'nav.revisions'|trans }}
+    </a>
+</nav>

@@ -1,0 +1,38 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ 'login.title'|trans }} — AcquisApp{% endblock %}
+
+{% block body %}
+<main class="min-h-screen flex items-center justify-center p-4">
+    <div class="w-full max-w-sm">
+        <h1 class="text-3xl font-bold text-center text-[#6C63FF] mb-8">AcquisApp</h1>
+
+        {% if error %}
+            <div class="bg-red-800/50 text-red-200 text-sm p-3 rounded-lg mb-4">{{ error.messageKey|trans(error.messageData, 'security') }}</div>
+        {% endif %}
+
+        <form method="post" action="{{ path('app_login') }}" class="space-y-4">
+            <div>
+                <label class="block text-sm text-white/70 mb-1">{{ 'form.email'|trans }}</label>
+                <input type="email" name="email" value="{{ last_username }}" autocomplete="email" required
+                    class="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-3 text-white placeholder-white/30 focus:outline-none focus:border-[#6C63FF]">
+            </div>
+            <div>
+                <label class="block text-sm text-white/70 mb-1">{{ 'form.password'|trans }}</label>
+                <input type="password" name="password" autocomplete="current-password" required
+                    class="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-[#6C63FF]">
+            </div>
+            <input type="hidden" name="_csrf_token" value="{{ csrf_token('authenticate') }}">
+            <button type="submit"
+                class="w-full bg-[#6C63FF] hover:bg-[#5a52e0] text-white font-semibold py-3 rounded-lg transition">
+                {{ 'action.login'|trans }}
+            </button>
+        </form>
+
+        <p class="text-center text-white/40 text-sm mt-6">
+            {{ 'login.no_account'|trans }}
+            <a href="{{ path('app_register') }}" class="text-[#6C63FF] hover:underline">{{ 'action.register'|trans }}</a>
+        </p>
+    </div>
+</main>
+{% endblock %}

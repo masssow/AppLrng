@@ -1,0 +1,123 @@
+{% extends 'base.html.twig' %}
+{% block title %}{{ 'consolidation.show.title'|trans }}{% endblock %}
+
+{% block body %}
+<main class="p-4 max-w-2xl mx-auto pb-24">
+
+    <a href="{{ path('app_ressource_show', {'id': session.ressource.id}) }}"
+       class="text-white/40 text-sm hover:text-white mb-4 inline-block transition">
+        ← {{ session.ressource.titre }}
+    </a>
+
+    <h1 class="text-xl font-bold mb-1">{{ 'consolidation.show.title'|trans }}</h1>
+
+    {% set statut = session.statut.value %}
+
+    {# Statut en attente / génération — auto-refresh #}
+    {% if statut == 'en_attente' or statut == 'generation' %}
+    <div class="bg-yellow-900/30 border border-yellow-700/40 rounded-xl p-5 mb-6 flex items-start gap-4">
+        <span class="text-2xl animate-spin">⏳</span>
+        <div>
+            <p class="font-semibold text-yellow-300">L'IA génère vos questions…</p>
+            <p class="text-sm text-white/50 mt-1">Cette page se rafraîchit automatiquement toutes les 5 secondes.</p>
+        </div>
+    </div>
+    <meta http-equiv="refresh" content="5">
+
+    {% elseif statut == 'erreur' %}
+    <div class="bg-red-900/30 border border-red-700/40 rounded-xl p-5 mb-6">
+        <p class="font-semibold text-red-300">Erreur lors de la génération.</p>
+        <p class="text-sm text-white/50 mt-1">Veuillez réessayer depuis la page ressource.</p>
+    </div>
+
+    {% elseif statut == 'pret' or statut == 'complete' %}
+
+    {# Questions #}
+    {% if session.questions|length > 0 %}
+    <section class="space-y-4 mb-8 mt-4">
+        <h2 class="text-base font-semibold text-white/70 mb-3">Questions ({{ session.questions|length }})</h2>
+        {% for question in session.questions %}
+        <div class="bg-white/5 border border-white/10 rounded-xl p-5">
+            <p class="font-medium mb-4 text-white">{{ question.ordre }}. {{ question.texte }}</p>
+
+            {% if question.reponseUtilisateur is null %}
+            <form method="post" action="{{ path('app_consolidation_show', {'id': session.id}) }}">
+                <input type="hidden" name="_token" value="{{ csrf_token('consolidation-' ~ session.id) }}">
+                <input type="hidden" name="question_id" value="{{ question.id }}">
+                <textarea name="reponse" rows="3" required
+                    class="w-full bg-white/5 border border-white/15 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-[#6C63FF] resize-none mb-3"
+                    placeholder="Votre réponse…"></textarea>
+                <button type="submit"
+                    class="bg-[#6C63FF] hover:bg-[#5a52e0] text-white text-sm px-4 py-2 rounded-lg transition">
+                    {{ 'action.submit'|trans }}
+                </button>
+            </form>
+            {% else %}
+            <div class="bg-white/5 rounded-lg px-4 py-3 mb-3">
+                <p class="text-white/70 text-sm italic">{{ question.reponseUtilisateur }}</p>
+            </div>
+            {% if question.feedbackIa %}
+            <div class="flex items-start gap-2">
+                <span class="text-green-400 mt-0.5">✓</span>
+                <p class="text-green-300 text-sm">{{ question.feedbackIa }}</p>
+            </div>
+            {% if question.feedbackScore %}
+            <p class="text-xs text-white/40 mt-1">Score : {{ question.feedbackScore }}/5</p>
+            {% endif %}
+            {% endif %}
+            {% endif %}
+        </div>
+        {% endfor %}
+    </section>
+    {% endif %}
+
+    {# Exercice #}
+    {% if session.exercice is not null %}
+    <section class="mb-8">
+        <h2 class="text-base font-semibold text-white/70 mb-3">Exercice pratique</h2>
+        <div class="bg-white/5 border border-white/10 rounded-xl p-5">
+            <p class="font-medium mb-4 text-white">{{ session.exercice.enonce }}</p>
+
+            {% if session.exercice.renduUtilisateur is null %}
+            <form method="post" action="{{ path('app_consolidation_show', {'id': session.id}) }}">
+                <input type="hidden" name="_token" value="{{ csrf_token('consolidation-' ~ session.id) }}">
+                <input type="hidden" name="exercice_id" value="{{ session.exercice.id }}">
+                <textarea name="rendu" rows="4" required
+                    class="w-full bg-white/5 border border-white/15 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-[#6C63FF] resize-none mb-3"
+                    placeholder="Votre solution…"></textarea>
+                <button type="submit"
+                    class="bg-[#6C63FF] hover:bg-[#5a52e0] text-white text-sm px-4 py-2 rounded-lg transition">
+                    {{ 'action.submit_rendu'|trans }}
+                </button>
+            </form>
+            {% else %}
+            <div class="bg-white/5 rounded-lg px-4 py-3 mb-3">
+                <p class="text-white/70 text-sm italic">{{ session.exercice.renduUtilisateur }}</p>
+            </div>
+            {% if session.exercice.feedbackIa %}
+            <p class="text-green-300 text-sm mt-2">{{ session.exercice.feedbackIa }}</p>
+            {% endif %}
+            {% endif %}
+        </div>
+    </section>
+    {% endif %}
+
+    {# Terminer la session #}
+    {% if statut == 'pret' %}
+    <form method="post" action="{{ path('app_consolidation_terminer', {'id': session.id}) }}">
+        <input type="hidden" name="_token" value="{{ csrf_token('terminer-' ~ session.id) }}">
+        <button type="submit"
+            class="w-full bg-[#6C63FF] hover:bg-[#5a52e0] text-white py-3 rounded-xl font-semibold transition">
+            {{ 'action.complete_session'|trans }}
+        </button>
+    </form>
+    {% else %}
+    <div class="bg-green-900/30 border border-green-700/40 rounded-xl p-4 text-center">
+        <p class="text-green-300 font-semibold">Session complétée ✓</p>
+    </div>
+    {% endif %}
+
+    {% endif %}
+
+</main>
+{% endblock %}

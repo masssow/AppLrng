@@ -1,0 +1,72 @@
+{% extends 'base.html.twig' %}
+{% block title %}{{ 'consolidation.initier.title'|trans }}{% endblock %}
+
+{% block body %}
+<main class="p-4 max-w-xl mx-auto pb-24">
+
+    <a href="{{ path('app_ressource_show', {'id': ressource.id}) }}"
+       class="text-white/40 text-sm hover:text-white mb-4 inline-block">← {{ ressource.titre }}</a>
+
+    <h1 class="text-2xl font-bold mb-1">{{ 'consolidation.initier.title'|trans }}</h1>
+    <p class="text-white/40 text-sm mb-8">{{ ressource.titre }}</p>
+
+    {{ form_start(form, {'attr': {'class': 'space-y-5', 'novalidate': 'novalidate'}}) }}
+
+        <div>
+            <label class="block text-sm font-medium text-white/70 mb-1">{{ 'form.compris'|trans }}</label>
+            {{ form_widget(form.compris, {'attr': {
+                'class': 'w-full bg-white/5 border border-white/15 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-[#6C63FF] resize-none',
+                'rows': 3,
+                'placeholder': 'Ex : les fonctions fléchées, le DOM…'
+            }}) }}
+        </div>
+
+        <div>
+            <label class="block text-sm font-medium text-white/70 mb-1">{{ 'form.points_flous'|trans }}</label>
+            {{ form_widget(form.pointsFlous, {'attr': {
+                'class': 'w-full bg-white/5 border border-white/15 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-[#6C63FF] resize-none',
+                'rows': 3,
+                'placeholder': 'Ex : les closures, les promesses…'
+            }}) }}
+        </div>
+
+        <div>
+            <label class="block text-sm font-medium text-white/70 mb-1">{{ 'form.application_possible'|trans }}</label>
+            {{ form_widget(form.applicationPossible, {'attr': {
+                'class': 'w-full bg-white/5 border border-white/15 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-[#6C63FF] resize-none',
+                'rows': 2,
+                'placeholder': 'Ex : créer un mini-formulaire interactif…'
+            }}) }}
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+            <div>
+                <label class="block text-sm font-medium text-white/70 mb-1">
+                    {{ 'form.confiance'|trans }}
+                    <span class="text-white/30 font-normal ml-1">1–5</span>
+                </label>
+                {{ form_widget(form.confiance, {'attr': {
+                    'class': 'w-full bg-white/5 border border-white/15 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-[#6C63FF]',
+                    'min': 1, 'max': 5
+                }}) }}
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-white/70 mb-1">
+                    {{ 'form.pomodoros_effectues'|trans }}
+                    <span class="text-white/30 font-normal ml-1">🍅</span>
+                </label>
+                {{ form_widget(form.pomodorosEffectues, {'attr': {
+                    'class': 'w-full bg-white/5 border border-white/15 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-[#6C63FF]',
+                    'min': 0
+                }}) }}
+            </div>
+        </div>
+
+        <button type="submit"
+            class="w-full bg-[#6C63FF] hover:bg-[#5a52e0] text-white py-3 rounded-xl font-semibold transition mt-2">
+            {{ 'action.generate'|trans }}
+        </button>
+
+    {{ form_end(form) }}
+</main>
+{% endblock %}

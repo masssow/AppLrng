@@ -1,0 +1,12 @@
+{% extends 'base.html.twig' %}
+{% block title %}{{ 'projet.rendu.title'|trans }}{% endblock %}
+{% block body %}
+<main class="p-4 max-w-xl mx-auto">
+    <h1 class="text-xl font-bold mb-2">{{ etape.titre }}</h1>
+    <p class="text-white/50 mb-6">{{ etape.description }}</p>
+    {{ form_start(form, {'attr': {'class': 'space-y-4'}}) }}
+        {{ form_row(form.rendu) }}
+        <button type="submit" class="w-full bg-[#6C63FF] text-white py-3 rounded-lg font-semibold">{{ 'action.submit'|trans }}</button>
+    {{ form_end(form) }}
+</main>
+{% endblock %}

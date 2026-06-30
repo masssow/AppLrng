@@ -1,0 +1,173 @@
+form:
+    prenom: Prénom
+    nom: Nom de famille
+    email: Adresse e-mail
+    password: Mot de passe
+    password_confirm: Confirmer le mot de passe
+    niveau: Niveau actuel
+    mode_accompagnement: "Mode d'accompagnement"
+    duree_cible_semaines: Durée cible (semaines)
+    titre: Titre
+    objectif: Objectif d'apprentissage
+    domaine: Domaine
+    compris: "Ce que j'ai compris"
+    points_flous: Points encore flous
+    application_possible: Application possible
+    confiance: "Confiance (1-5)"
+    pomodoros_effectues: Pomodoros effectués
+    rendu: Mon rendu
+    type: Type
+    duree_minutes: Durée (min)
+    url: URL
+    optional: optionnel
+
+action:
+    register: Créer mon compte
+    login: Se connecter
+    logout: Déconnexion
+    new_parcours: Nouveau parcours
+    create: Créer
+    delete_parcours: Supprimer ce parcours
+    start: Démarrer
+    consolidate: Consolider
+    generate: Générer la session
+    complete_session: Terminer la session
+    submit: Soumettre
+    submit_rendu: Soumettre mon rendu
+    done: Fait
+    add: Ajouter
+    cancel: Annuler
+    delete_confirm: Oui, supprimer
+    voir_projet: Voir le projet
+
+nav:
+    dashboard: Accueil
+    parcours: Mes parcours
+    revisions: Révisions
+    logout: Déconnexion
+
+niveau:
+    debutant: Débutant
+    intermediaire: Intermédiaire
+    avance: Avancé
+
+mode:
+    socratique: Socratique
+    mixte: Mixte
+    explicatif: Explicatif
+
+statut:
+    brouillon: Brouillon
+    actif: Actif
+    pause: En pause
+    termine: Terminé
+    abandonne: Abandonné
+    a_faire: À faire
+    en_cours: En cours
+    vue: Vue
+    consolidee: Consolidée
+    en_attente: En attente
+    generation: Génération en cours
+    pret: Prêt
+    complete: Complète
+    erreur: Erreur
+    verrouillee: Verrouillée
+    disponible: Disponible
+
+type:
+    video: Vidéo
+    article: Article
+    cours: Cours
+    podcast: Podcast
+    livre: Livre
+    VIDEO: Vidéo
+    ARTICLE: Article
+    COURS: Cours
+    PODCAST: Podcast
+    LIVRE: Livre
+
+type_etape:
+    lecture: Lecture
+    exercice: Exercice
+    outil_externe: Outil externe
+    livrable: Livrable
+
+dashboard:
+    title: Tableau de bord
+    welcome: "Bonjour, %name% 👋"
+    revisions_today: "%count% révision(s) du jour"
+    my_parcours: Mes parcours
+    no_parcours: "Aucun parcours pour l'instant. Commencez par en créer un !"
+
+parcours:
+    index:
+        title: Mes parcours
+        empty: Aucun parcours. Créez-en un !
+    new:
+        title: Nouveau parcours
+    ia_processing: "L'IA structure votre parcours…"
+    progression: Progression
+    ressources: Ressources
+    no_ressources: Aucune ressource. Ajoutez-en une ci-dessous.
+    add_ressource: Ajouter une ressource
+
+ressource:
+    open_link: Ouvrir la ressource
+    pomodoros_suggeres: pomodoros suggérés
+    pomodoro_tip: "séances de 25 min de concentration"
+    pomodoros_plan: Plan de session
+    start_cta: Démarrer l'étude
+    consolidate_now: Consolider maintenant
+    session_active: Une session de consolidation est en cours
+    voir_session: Voir la session →
+    vue_ready: "Ressource vue — prête à consolider !"
+    consolidee_label: Ressource consolidée ✓
+    consolidee_le: "Consolidée le %date%"
+    revision_planifiee: Révision espacée planifiée
+    voir_revisions: Voir mes révisions
+    redo_consolidation: Refaire une consolidation
+
+consolidation:
+    initier:
+        title: Consolider cette ressource
+    show:
+        title: Session de consolidation
+
+revision:
+    index:
+        title: Mes révisions
+        empty: Aucune révision en attente. Bravo !
+    iteration: "Révision n°%n%"
+
+projet:
+    none: Projet non disponible
+    not_generated: Le projet fil rouge sera généré après l'activation du parcours.
+    rendu:
+        title: Soumettre mon rendu
+
+evaluation_surprise:
+    title: Évaluation surprise
+    no_session: Aucune session de consolidation trouvée.
+
+login:
+    title: Connexion
+    no_account: Pas encore de compte ?
+
+register:
+    title: Inscription
+    already_account: Déjà un compte ?
+
+flash:
+    ressource_added: Ressource ajoutée !
+    csrf_error: Token de sécurité invalide. Réessayez.
+    registration_success: Compte créé avec succès ! Connectez-vous.
+    parcours_created: "Parcours créé ! L'IA structure votre parcours en arrière-plan."
+    parcours_deleted: Parcours supprimé.
+    consolidation_initiated: "Session de consolidation initiée. Génération en cours..."
+    session_completed: Session terminée !
+    rendu_submitted: Rendu soumis avec succès.
+    revision_completed: Révision complétée !
+
+confirm:
+    delete: Cette action est irréversible. Toutes les ressources et sessions associées seront supprimées.
+    delete_title: Supprimer ce parcours ?

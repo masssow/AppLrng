@@ -1,0 +1,20 @@
+{% extends 'base.html.twig' %}
+{% block title %}{{ 'evaluation_surprise.title'|trans }}{% endblock %}
+{% block body %}
+<main class="p-4 max-w-2xl mx-auto">
+    <h1 class="text-xl font-bold mb-2">{{ 'evaluation_surprise.title'|trans }}</h1>
+    <p class="text-white/50 mb-6">{{ ressource.titre }}</p>
+    {% if derniereSession and derniereSession.questions|length > 0 %}
+    <div class="space-y-4">
+        {% for question in derniereSession.questions %}
+        <div class="bg-white/5 rounded-xl p-4">
+            <p class="font-medium">{{ question.texte }}</p>
+            {% if question.feedbackIa %}<p class="text-white/40 text-sm mt-2 italic">{{ question.feedbackIa }}</p>{% endif %}
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <p class="text-white/40">{{ 'evaluation_surprise.no_session'|trans }}</p>
+    {% endif %}
+</main>
+{% endblock %}

@@ -1,0 +1,18 @@
+{% extends 'base.html.twig' %}
+{% block title %}{{ 'parcours.index.title'|trans }}{% endblock %}
+{% block body %}
+<main class="p-4 max-w-4xl mx-auto">
+    <div class="flex justify-between items-center mb-6">
+        <h1 class="text-2xl font-bold">{{ 'parcours.index.title'|trans }}</h1>
+        <a href="{{ path('app_parcours_new') }}" class="bg-[#6C63FF] text-white px-4 py-2 rounded-lg text-sm">{{ 'action.new_parcours'|trans }}</a>
+    </div>
+    {% for p in parcours %}
+    <a href="{{ path('app_parcours_show', {'id': p.id}) }}" class="block bg-white/5 hover:bg-white/10 rounded-xl p-4 mb-3 transition">
+        <p class="font-medium">{{ p.titre }}</p>
+        <p class="text-sm text-white/50">{{ p.domaine.label }} · {{ ('statut.' ~ p.statut.value)|trans }}</p>
+    </a>
+    {% else %}
+    <p class="text-white/40 text-center py-12">{{ 'parcours.index.empty'|trans }}</p>
+    {% endfor %}
+</main>
+{% endblock %}

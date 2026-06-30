@@ -1,0 +1,13 @@
+<div class="flex gap-1">
+    {% for locale in ['fr', 'es'] %}
+        <a href="{{ path('app_set_locale', {'locale': locale}) }}"
+           class="text-xs px-2 py-1 rounded font-medium transition
+                  {% if app.request.locale == locale %}
+                      bg-[#6C63FF] text-white
+                  {% else %}
+                      text-white/40 hover:text-white hover:bg-white/10
+                  {% endif %}">
+            {{ locale|upper }}
+        </a>
+    {% endfor %}
+</div>

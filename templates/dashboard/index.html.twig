@@ -1,0 +1,154 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ 'dashboard.title'|trans }} — AcquisApp{% endblock %}
+
+{% block body %}
+<main class="p-4 max-w-2xl mx-auto pb-24">
+
+    {# En-tête #}
+    <div class="mb-6">
+        <h1 class="text-2xl font-bold">{{ 'dashboard.welcome'|trans({'%name%': app.user.prenom}) }}</h1>
+        {% if streak > 0 %}
+        <p class="text-sm text-white/50 mt-1">🔥 {{ streak }} jour{% if streak > 1 %}s{% endif %} de suite</p>
+        {% endif %}
+    </div>
+
+    {# ─── ZONE 1 : REPRENDRE ──────────────────────────────── #}
+    {% if actionAReprendre is not null %}
+    <section class="mb-5">
+        <div class="bg-[#6C63FF]/15 border border-[#6C63FF]/40 rounded-xl p-4 flex items-start gap-4">
+            <span class="text-2xl shrink-0">
+                {% if actionAReprendre.type == 'consolidation' %}🧠
+                {% elseif actionAReprendre.type == 'micro_etape' %}🛠
+                {% else %}📖{% endif %}
+            </span>
+            <div class="flex-1 min-w-0">
+                <p class="text-xs text-[#9b94ff] uppercase tracking-wide mb-0.5">
+                    {% if actionAReprendre.type == 'consolidation' %}Session en attente
+                    {% elseif actionAReprendre.type == 'micro_etape' %}Étape en cours
+                    {% else %}Ressource en cours{% endif %}
+                </p>
+                <p class="font-semibold text-white truncate">{{ actionAReprendre.titre }}</p>
+                <p class="text-xs text-white/40 mt-0.5">{{ actionAReprendre.contexte }}</p>
+            </div>
+            <a href="{{ path(actionAReprendre.route, actionAReprendre.routeParams) }}"
+               class="shrink-0 bg-[#6C63FF] hover:bg-[#5a52e0] text-white text-sm px-4 py-2 rounded-lg transition font-medium">
+                Reprendre →
+            </a>
+        </div>
+    </section>
+    {% endif %}
+
+    {# ─── ZONE 2 : RÉVISIONS DU JOUR ─────────────────────── #}
+    {% if revisionsDuJour|length > 0 %}
+    <section class="mb-5">
+        <h2 class="text-sm font-semibold text-white/60 uppercase tracking-wide mb-3">
+            📅 {{ 'dashboard.revisions_today'|trans({'%count%': revisionsDuJour|length}) }}
+        </h2>
+        <div class="space-y-2">
+            {% for revision in revisionsDuJour %}
+            {% set joursRetard = (date('now')|date('U') - revision.datePrevue|date('U')) // 86400 %}
+            <div class="rounded-xl p-4 flex items-center justify-between
+                {% if joursRetard > 0 %}bg-orange-900/20 border border-orange-700/30{% else %}bg-white/5 border border-white/10{% endif %}">
+                <div class="min-w-0">
+                    <p class="text-sm font-medium text-white truncate">{{ revision.ressource.titre }}</p>
+                    {% if joursRetard > 0 %}
+                    <p class="text-xs text-orange-400/80 mt-0.5">prévue il y a {{ joursRetard }} jour{% if joursRetard > 1 %}s{% endif %}</p>
+                    {% else %}
+                    <p class="text-xs text-white/40 mt-0.5">{{ 'revision.iteration'|trans({'%n%': revision.iteration}) }}</p>
+                    {% endif %}
+                </div>
+                <form method="post" action="{{ path('app_revision_completer', {'id': revision.id}) }}" class="flex gap-2 items-center ml-3 shrink-0">
+                    <input type="hidden" name="_token" value="{{ csrf_token('revision-' ~ revision.id) }}">
+                    <select name="score" class="bg-white/10 text-white text-sm rounded-lg px-2 py-1 border border-white/20">
+                        {% for i in 1..5 %}
+                        <option value="{{ i }}">{{ i }}/5</option>
+                        {% endfor %}
+                    </select>
+                    <button type="submit"
+                        class="bg-[#6C63FF] hover:bg-[#5a52e0] text-white text-sm px-3 py-1.5 rounded-lg transition">
+                        {{ 'action.done'|trans }}
+                    </button>
+                </form>
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+    {% endif %}
+
+    {# ─── ZONE 3 : PROGRESSION GLOBALE ───────────────────── #}
+    {% if scoreAgrege is not null %}
+    <section class="mb-5">
+        <div class="bg-white/5 rounded-xl p-4 flex items-center gap-4">
+            <div class="flex-1">
+                <p class="text-sm font-semibold text-white mb-0.5">{{ scoreAgrege.libelleQualitatif }}</p>
+                <div class="flex items-center gap-3 mt-2">
+                    <div class="flex-1 h-2 bg-white/10 rounded-full overflow-hidden">
+                        <div class="h-full bg-[#6C63FF] rounded-full transition-all"
+                             style="width: {{ scoreAgrege.valeur }}%"></div>
+                    </div>
+                    <span class="text-xs text-white/40 shrink-0">{{ scoreAgrege.valeur }}%</span>
+                </div>
+            </div>
+            {% if streak > 0 %}
+            <div class="text-center shrink-0 pl-4 border-l border-white/10">
+                <p class="text-2xl font-bold text-orange-400">🔥{{ streak }}</p>
+                <p class="text-xs text-white/40">jours</p>
+            </div>
+            {% endif %}
+        </div>
+    </section>
+    {% endif %}
+
+    {# ─── ZONE 4 : MES PARCOURS ───────────────────────────── #}
+    <section>
+        <div class="flex items-center justify-between mb-3">
+            <h2 class="text-sm font-semibold text-white/60 uppercase tracking-wide">{{ 'dashboard.my_parcours'|trans }}</h2>
+            <a href="{{ path('app_parcours_new') }}"
+               class="bg-[#6C63FF] hover:bg-[#5a52e0] text-white text-sm px-4 py-1.5 rounded-lg transition">
+                {{ 'action.new_parcours'|trans }}
+            </a>
+        </div>
+
+        {% if parcoursActifs|length == 0 %}
+        <div class="bg-white/5 rounded-xl p-8 text-center">
+            <p class="text-white/40 text-sm mb-4">{{ 'dashboard.no_parcours'|trans }}</p>
+            <a href="{{ path('app_parcours_new') }}"
+               class="inline-block bg-[#6C63FF] hover:bg-[#5a52e0] text-white text-sm px-5 py-2.5 rounded-xl transition font-medium">
+                {{ 'action.new_parcours'|trans }}
+            </a>
+        </div>
+        {% else %}
+        <div class="space-y-2">
+            {% for p in parcoursActifs %}
+            <a href="{{ path('app_parcours_show', {'id': p.id}) }}"
+               class="bg-white/5 hover:bg-white/10 rounded-xl p-4 flex items-center justify-between transition">
+                <div class="min-w-0">
+                    <p class="font-medium text-sm truncate">{{ p.titre }}</p>
+                    <p class="text-xs text-white/40 mt-0.5">
+                        {{ p.domaine.label }}
+                        <span class="mx-1">·</span>
+                        <span class="{% if p.statut.value == 'actif' %}text-green-400{% elseif p.statut.value == 'brouillon' %}text-yellow-400{% else %}text-white/40{% endif %}">
+                            {{ ('statut.' ~ p.statut.value)|trans }}
+                        </span>
+                        {% if p.ressources|length > 0 %}
+                        <span class="mx-1">·</span>{{ p.ressources|length }} ressource{% if p.ressources|length > 1 %}s{% endif %}
+                        {% endif %}
+                    </p>
+                </div>
+                {% if p.progression %}
+                <div class="text-right ml-4 shrink-0">
+                    <span class="text-[#6C63FF] font-bold">{{ p.progression.scoreConsolidation }}%</span>
+                    <div class="w-16 h-1.5 bg-white/10 rounded-full mt-1">
+                        <div class="h-full bg-[#6C63FF] rounded-full" style="width: {{ p.progression.scoreConsolidation }}%"></div>
+                    </div>
+                </div>
+                {% endif %}
+            </a>
+            {% endfor %}
+        </div>
+        {% endif %}
+    </section>
+
+</main>
+{% endblock %}

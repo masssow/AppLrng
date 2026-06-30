@@ -1,0 +1,173 @@
+form:
+    prenom: Nombre
+    nom: Apellido
+    email: Correo electrónico
+    password: Contraseña
+    password_confirm: Confirmar contraseña
+    niveau: Nivel actual
+    mode_accompagnement: Modo de acompañamiento
+    duree_cible_semaines: Duración objetivo (semanas)
+    titre: Título
+    objectif: Objetivo de aprendizaje
+    domaine: Dominio
+    compris: Lo que entendí
+    points_flous: Puntos confusos
+    application_possible: Aplicación posible
+    confiance: "Confianza (1-5)"
+    pomodoros_effectues: Pomodoros realizados
+    rendu: Mi entrega
+    type: Tipo
+    duree_minutes: Duración (min)
+    url: URL
+    optional: opcional
+
+action:
+    register: Crear mi cuenta
+    login: Iniciar sesión
+    logout: Cerrar sesión
+    new_parcours: Nuevo recorrido
+    create: Crear
+    delete_parcours: Eliminar este recorrido
+    start: Empezar
+    consolidate: Consolidar
+    generate: Generar sesión
+    complete_session: Terminar la sesión
+    submit: Enviar
+    submit_rendu: Enviar mi entrega
+    done: Hecho
+    add: Añadir
+    cancel: Cancelar
+    delete_confirm: Sí, eliminar
+    voir_projet: Ver el proyecto
+
+nav:
+    dashboard: Inicio
+    parcours: Mis recorridos
+    revisions: Revisiones
+    logout: Cerrar sesión
+
+niveau:
+    debutant: Principiante
+    intermediaire: Intermedio
+    avance: Avanzado
+
+mode:
+    socratique: Socrático
+    mixte: Mixto
+    explicatif: Explicativo
+
+statut:
+    brouillon: Borrador
+    actif: Activo
+    pause: En pausa
+    termine: Terminado
+    abandonne: Abandonado
+    a_faire: Por hacer
+    en_cours: En curso
+    vue: Vista
+    consolidee: Consolidada
+    en_attente: En espera
+    generation: "Generando..."
+    pret: Listo
+    complete: Completa
+    erreur: Error
+    verrouillee: Bloqueada
+    disponible: Disponible
+
+type:
+    video: Vídeo
+    article: Artículo
+    cours: Curso
+    podcast: Pódcast
+    livre: Libro
+    VIDEO: Vídeo
+    ARTICLE: Artículo
+    COURS: Curso
+    PODCAST: Pódcast
+    LIVRE: Libro
+
+type_etape:
+    lecture: Lectura
+    exercice: Ejercicio
+    outil_externe: Herramienta externa
+    livrable: Entregable
+
+dashboard:
+    title: Panel de control
+    welcome: "¡Hola, %name%! 👋"
+    revisions_today: "%count% revisión(es) de hoy"
+    my_parcours: Mis recorridos
+    no_parcours: "Sin recorridos aún. ¡Empieza creando uno!"
+
+parcours:
+    index:
+        title: Mis recorridos
+        empty: "Sin recorridos. ¡Crea uno!"
+    new:
+        title: Nuevo recorrido
+    ia_processing: La IA está estructurando tu recorrido…
+    progression: Progresión
+    ressources: Recursos
+    no_ressources: Sin recursos. Añade uno abajo.
+    add_ressource: Añadir un recurso
+
+ressource:
+    open_link: Abrir el recurso
+    pomodoros_suggeres: pomodoros sugeridos
+    pomodoro_tip: "sesiones de 25 min de concentración"
+    pomodoros_plan: Plan de sesión
+    start_cta: Empezar el estudio
+    consolidate_now: Consolidar ahora
+    session_active: Hay una sesión de consolidación en curso
+    voir_session: Ver la sesión →
+    vue_ready: "¡Recurso visto — listo para consolidar!"
+    consolidee_label: Recurso consolidado ✓
+    consolidee_le: "Consolidado el %date%"
+    revision_planifiee: Revisión espaciada planificada
+    voir_revisions: Ver mis revisiones
+    redo_consolidation: Repetir la consolidación
+
+consolidation:
+    initier:
+        title: Consolidar este recurso
+    show:
+        title: Sesión de consolidación
+
+revision:
+    index:
+        title: Mis revisiones
+        empty: "Sin revisiones pendientes. ¡Bravo!"
+    iteration: "Revisión n°%n%"
+
+projet:
+    none: Proyecto no disponible
+    not_generated: El proyecto hilo rojo se generará tras activar el recorrido.
+    rendu:
+        title: Enviar mi entrega
+
+evaluation_surprise:
+    title: Evaluación sorpresa
+    no_session: No se encontró ninguna sesión de consolidación.
+
+login:
+    title: Iniciar sesión
+    no_account: "¿Sin cuenta aún?"
+
+register:
+    title: Registro
+    already_account: "¿Ya tienes cuenta?"
+
+flash:
+    ressource_added: "¡Recurso añadido!"
+    csrf_error: Token de seguridad inválido. Inténtalo de nuevo.
+    registration_success: "¡Cuenta creada! Inicia sesión."
+    parcours_created: "¡Recorrido creado! La IA lo está estructurando."
+    parcours_deleted: Recorrido eliminado.
+    consolidation_initiated: "Sesión iniciada. Generando..."
+    session_completed: "¡Sesión completada!"
+    rendu_submitted: Entrega enviada con éxito.
+    revision_completed: "¡Revisión completada!"
+
+confirm:
+    delete: Esta acción es irreversible. Se eliminarán todos los recursos y sesiones asociadas.
+    delete_title: "¿Eliminar este recorrido?"

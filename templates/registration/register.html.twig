@@ -1,0 +1,58 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ 'register.title'|trans }} — AcquisApp{% endblock %}
+
+{% block body %}
+<main class="min-h-screen flex items-center justify-center p-4">
+    <div class="w-full max-w-sm">
+        <h1 class="text-3xl font-bold text-center text-[#6C63FF] mb-8">AcquisApp</h1>
+
+        {{ form_start(registrationForm, {'attr': {'class': 'space-y-4'}}) }}
+
+            <div>
+                {{ form_label(registrationForm.prenom, null, {'label_attr': {'class': 'block text-sm text-white/70 mb-1'}}) }}
+                {{ form_widget(registrationForm.prenom, {'attr': {'class': 'w-full bg-white/10 border border-white/20 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-[#6C63FF]'}}) }}
+                {{ form_errors(registrationForm.prenom) }}
+            </div>
+
+            <div>
+                {{ form_label(registrationForm.nom, null, {'label_attr': {'class': 'block text-sm text-white/70 mb-1'}}) }}
+                {{ form_widget(registrationForm.nom, {'attr': {'class': 'w-full bg-white/10 border border-white/20 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-[#6C63FF]'}}) }}
+                {{ form_errors(registrationForm.nom) }}
+            </div>
+
+            <div>
+                {{ form_label(registrationForm.email, null, {'label_attr': {'class': 'block text-white/70 text-sm mb-1'}}) }}
+                {{ form_widget(registrationForm.email, {'attr': {'class': 'w-full bg-white/10 border border-white/20 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-[#6C63FF]'}}) }}
+                {{ form_errors(registrationForm.email) }}
+            </div>
+
+            <div>
+                {{ form_label(registrationForm.plainPassword, null, {'label_attr': {'class': 'block text-sm text-white/70 mb-1'}}) }}
+                <div class="space-y-2">
+                    {{ form_widget(registrationForm.plainPassword.first, {'attr': {
+                        'class': 'w-full bg-white/10 border border-white/20 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-[#6C63FF]',
+                        'placeholder': 'form.password'|trans
+                    }}) }}
+                    {{ form_widget(registrationForm.plainPassword.second, {'attr': {
+                        'class': 'w-full bg-white/10 border border-white/20 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-[#6C63FF]',
+                        'placeholder': 'form.password_confirm'|trans
+                    }}) }}
+                </div>
+                {{ form_errors(registrationForm.plainPassword) }}
+            </div>
+
+            <button type="submit"
+                class="w-full bg-[#6C63FF] hover:bg-[#5a52e0] text-white font-semibold py-3 rounded-lg transition">
+                {{ 'action.register'|trans }}
+            </button>
+
+        {{ form_end(registrationForm) }}
+
+        <p class="text-center text-white/40 text-sm mt-6">
+            {{ 'register.already_account'|trans }}
+            <a href="{{ path('app_login') }}" class="text-[#6C63FF] hover:underline">{{ 'action.login'|trans }}</a>
+        </p>
+    </div>
+</main>
+{% endblock %}

@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="{{ app.request.locale }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}AcquisApp{% endblock %}</title>
+    {% block stylesheets %}
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'dark-bg': '#0A0A0F',
+                        'accent': '#6C63FF',
+                    }
+                }
+            }
+        }
+    </script>
+    {% endblock %}
+    {% block head %}{% endblock %}
+    <style>
+        input, textarea, select {
+            color-scheme: dark;
+        }
+        input:autofill, input:-webkit-autofill {
+            -webkit-box-shadow: 0 0 0 1000px #1a1a2e inset !important;
+            -webkit-text-fill-color: white !important;
+        }
+    </style>
+</head>
+<body class="bg-[#0A0A0F] text-white min-h-screen">
+    {% if app.user %}
+        {% include 'components/_topbar.html.twig' %}
+    {% endif %}
+
+    <div class="{% if app.user %}pt-14 pb-16 md:pb-0 md:pl-64{% endif %}">
+        {% for label, messages in app.flashes %}
+            {% for message in messages %}
+                <div class="mx-4 mt-4 p-3 rounded-lg {% if label == 'success' %}bg-green-800 text-green-100{% else %}bg-red-800 text-red-100{% endif %}">
+                    {{ message|trans }}
+                </div>
+            {% endfor %}
+        {% endfor %}
+
+        {% block body %}{% endblock %}
+    </div>
+
+    {% if app.user %}
+        {% include 'components/_bottomnav.html.twig' %}
+        {% include 'components/_sidebar.html.twig' %}
+    {% endif %}
+
+    {% block javascripts %}
+        {% set frankenphpHotReload = app.request.server.get('FRANKENPHP_HOT_RELOAD') %}
+        {% if frankenphpHotReload %}
+        <meta name="frankenphp-hot-reload:url" content="{{ frankenphpHotReload }}">
+        <script src="https://cdn.jsdelivr.net/npm/idiomorph"></script>
+        <script src="https://cdn.jsdelivr.net/npm/frankenphp-hot-reload/+esm" type="module"></script>
+        {% endif %}
+    {% endblock %}
+</body>
+</html>

@@ -1,0 +1,182 @@
+{% extends 'base.html.twig' %}
+{% block title %}{{ parcours.titre }}{% endblock %}
+
+{% block body %}
+<main class="p-4 max-w-2xl mx-auto pb-24">
+
+    {# En-tête #}
+    <div class="mb-6">
+        <a href="{{ path('app_parcours_index') }}" class="text-white/40 text-sm hover:text-white mb-2 inline-block">← {{ 'nav.parcours'|trans }}</a>
+        <h1 class="text-2xl font-bold mt-1">{{ parcours.titre }}</h1>
+        <div class="flex items-center gap-3 mt-1 flex-wrap">
+            <span class="text-white/50 text-sm">{{ parcours.domaine.label }}</span>
+            <span class="text-xs px-2 py-0.5 rounded-full
+                {% if parcours.statut.value == 'actif' %}bg-green-800/60 text-green-300
+                {% elseif parcours.statut.value == 'brouillon' %}bg-yellow-800/60 text-yellow-300
+                {% elseif parcours.statut.value == 'termine' %}bg-[#6C63FF]/30 text-[#6C63FF]
+                {% else %}bg-white/10 text-white/50{% endif %}">
+                {{ ('statut.' ~ parcours.statut.value)|trans }}
+            </span>
+            {% if parcours.statut.value == 'brouillon' %}
+            <span class="text-xs text-yellow-400/70 flex items-center gap-1">
+                <span class="animate-pulse">⏳</span> {{ 'parcours.ia_processing'|trans }}
+            </span>
+            {% endif %}
+        </div>
+        {% if parcours.objectif %}
+        <p class="text-white/60 text-sm mt-3 bg-white/5 rounded-lg p-3">{{ parcours.objectif }}</p>
+        {% endif %}
+    </div>
+
+    {# Progression #}
+    {% if parcours.progression %}
+    <div class="bg-white/5 rounded-xl p-4 mb-6 flex items-center gap-4">
+        <div class="flex-1">
+            <div class="flex justify-between text-sm mb-1">
+                <span class="text-white/60">{{ 'parcours.progression'|trans }}</span>
+                <span class="font-bold text-[#6C63FF]">{{ parcours.progression.scoreConsolidation }}%</span>
+            </div>
+            <div class="h-2 bg-white/10 rounded-full overflow-hidden">
+                <div class="h-full bg-[#6C63FF] rounded-full transition-all" style="width: {{ parcours.progression.scoreConsolidation }}%"></div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    {# Ressources #}
+    <section class="mb-6">
+        <h2 class="text-base font-semibold text-white/80 mb-3">{{ 'parcours.ressources'|trans }} ({{ parcours.ressources|length }})</h2>
+
+        {% if parcours.ressources|length == 0 %}
+        <div class="bg-white/5 rounded-xl p-6 text-center text-white/40 text-sm mb-4">
+            {{ 'parcours.no_ressources'|trans }}
+        </div>
+        {% else %}
+        <div class="space-y-2 mb-4">
+            {% for ressource in parcours.ressources %}
+            <div class="bg-white/5 hover:bg-white/10 rounded-xl transition">
+                <a href="{{ path('app_ressource_show', {'id': ressource.id}) }}"
+                   class="flex items-center gap-3 p-4">
+                    <span class="text-lg">
+                        {% if ressource.type.value == 'VIDEO' %}🎬
+                        {% elseif ressource.type.value == 'ARTICLE' %}📄
+                        {% elseif ressource.type.value == 'COURS' %}📖
+                        {% elseif ressource.type.value == 'PODCAST' %}🎙️
+                        {% else %}📚{% endif %}
+                    </span>
+                    <div class="flex-1 min-w-0">
+                        <p class="font-medium text-sm truncate">{{ ressource.ordre }}. {{ ressource.titre }}</p>
+                        <p class="text-xs text-white/40">{{ ('type.' ~ ressource.type.value)|trans }}{% if ressource.dureeEstimeeMinutes %} · {{ ressource.dureeEstimeeMinutes }} min{% endif %} · {{ ressource.pomodorosSuggeres }} 🍅</p>
+                    </div>
+                    <span class="text-xs px-2 py-0.5 rounded-full shrink-0
+                        {% if ressource.statut.value == 'consolidee' %}bg-green-800/60 text-green-300
+                        {% elseif ressource.statut.value == 'en_cours' %}bg-blue-800/60 text-blue-300
+                        {% elseif ressource.statut.value == 'vue' %}bg-purple-800/60 text-purple-300
+                        {% else %}bg-white/10 text-white/40{% endif %}">
+                        {{ ('statut.' ~ ressource.statut.value)|trans }}
+                    </span>
+                </a>
+                {% if ressource.statut.value == 'consolidee' and dernieresSessionsMap[ressource.id ~ ''] is defined %}
+                {% set sessionMap = dernieresSessionsMap[ressource.id ~ ''] %}
+                {% if sessionMap.questions|length > 0 %}
+                <details class="px-4 pb-3">
+                    <summary class="text-xs text-white/35 cursor-pointer hover:text-white/60 select-none list-none flex items-center gap-1">
+                        <span>▸</span> {{ sessionMap.questions|length }} sujets abordés
+                    </summary>
+                    <ul class="mt-2 space-y-1 pl-2 border-l border-white/10">
+                        {% for q in sessionMap.questions %}
+                        <li class="text-xs text-white/45">{{ q.texte|slice(0,90) }}{% if q.texte|length > 90 %}…{% endif %}</li>
+                        {% endfor %}
+                    </ul>
+                </details>
+                {% endif %}
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        {# Formulaire ajout ressource #}
+        <details class="bg-white/5 rounded-xl overflow-hidden">
+            <summary class="px-4 py-3 cursor-pointer text-sm text-[#6C63FF] hover:bg-white/5 list-none flex items-center gap-2 select-none">
+                <span class="text-lg">＋</span> {{ 'parcours.add_ressource'|trans }}
+            </summary>
+            <form method="post" action="{{ path('app_ressource_ajouter', {'id': parcours.id}) }}" class="p-4 space-y-3 border-t border-white/10">
+                <input type="hidden" name="_token" value="{{ csrf_token('add-ressource-' ~ parcours.id) }}">
+                <div>
+                    <label class="block text-xs text-white/60 mb-1">{{ 'form.titre'|trans }}</label>
+                    <input type="text" name="titre" required
+                        class="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-[#6C63FF]">
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs text-white/60 mb-1">{{ 'form.type'|trans }}</label>
+                        <select name="type" class="w-full bg-[#1a1a2e] border border-white/20 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-[#6C63FF]">
+                            <option value="VIDEO">🎬 {{ ('type.VIDEO')|trans }}</option>
+                            <option value="ARTICLE">📄 {{ ('type.ARTICLE')|trans }}</option>
+                            <option value="COURS" selected>📖 {{ ('type.COURS')|trans }}</option>
+                            <option value="PODCAST">🎙️ {{ ('type.PODCAST')|trans }}</option>
+                            <option value="LIVRE">📚 {{ ('type.LIVRE')|trans }}</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs text-white/60 mb-1">{{ 'form.duree_minutes'|trans }}</label>
+                        <input type="number" name="duree" min="1" placeholder="60"
+                            class="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-[#6C63FF]">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs text-white/60 mb-1">{{ 'form.url'|trans }} ({{ 'form.optional'|trans }})</label>
+                    <input type="url" name="url"
+                        class="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-[#6C63FF]">
+                </div>
+                <button type="submit" class="w-full bg-[#6C63FF] hover:bg-[#5a52e0] text-white text-sm py-2 rounded-lg transition">
+                    {{ 'action.add'|trans }}
+                </button>
+            </form>
+        </details>
+    </section>
+
+    {# Projet fil rouge #}
+    {% if parcours.projetFilRouge %}
+    <section class="mb-6">
+        <h2 class="text-base font-semibold text-white/80 mb-3">🎯 {{ parcours.projetFilRouge.titre }}</h2>
+        <a href="{{ path('app_projet_show', {'id': parcours.id}) }}"
+           class="block bg-white/5 hover:bg-white/10 rounded-xl p-4 transition text-sm text-white/70">
+            {{ parcours.projetFilRouge.description }}
+            <span class="text-[#6C63FF] ml-2">→ {{ 'action.voir_projet'|trans }}</span>
+        </a>
+    </section>
+    {% endif %}
+
+    {# Danger zone #}
+    <div class="mt-8 pt-6 border-t border-white/10">
+        <button onclick="document.getElementById('modal-delete').classList.remove('hidden')"
+            class="text-sm text-red-400 hover:text-red-300 transition">
+            🗑 {{ 'action.delete_parcours'|trans }}
+        </button>
+    </div>
+
+</main>
+
+{# Modal confirmation suppression #}
+<div id="modal-delete" class="hidden fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4">
+    <div class="bg-[#111118] border border-white/10 rounded-2xl p-6 max-w-sm w-full">
+        <h3 class="text-lg font-bold mb-2">{{ 'confirm.delete_title'|trans }}</h3>
+        <p class="text-white/60 text-sm mb-6">{{ 'confirm.delete'|trans }}</p>
+        <div class="flex gap-3">
+            <button onclick="document.getElementById('modal-delete').classList.add('hidden')"
+                class="flex-1 bg-white/10 hover:bg-white/20 text-white py-2 rounded-lg text-sm transition">
+                {{ 'action.cancel'|trans }}
+            </button>
+            <form method="post" action="{{ path('app_parcours_delete', {'id': parcours.id}) }}" class="flex-1">
+                <input type="hidden" name="_token" value="{{ csrf_token('delete-parcours-' ~ parcours.id) }}">
+                <button type="submit"
+                    class="w-full bg-red-600 hover:bg-red-500 text-white py-2 rounded-lg text-sm transition">
+                    {{ 'action.delete_confirm'|trans }}
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
