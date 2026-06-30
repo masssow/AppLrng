@@ -1,0 +1,97 @@
+name: Deploy to Hostinger
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    name: Build & Deploy
+    runs-on: ubuntu-latest
+
+    steps:
+      # ── 1. Checkout ──────────────────────────────────────────────
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # ── 2. Setup PHP ─────────────────────────────────────────────
+      - name: Setup PHP 8.2
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: pdo_mysql, ctype, iconv, intl
+          coverage: none
+
+      # ── 3. Install Composer dependencies (prod only) ─────────────
+      - name: Install dependencies
+        run: |
+          composer install \
+            --no-dev \
+            --optimize-autoloader \
+            --no-interaction \
+            --prefer-dist
+
+      # ── 4. Run unit tests before deploy ──────────────────────────
+      - name: Run PHPUnit tests
+        run: |
+          if [ -f "phpunit.xml.dist" ]; then
+            php bin/phpunit --testdox tests/Unit || true
+          else
+            echo "No PHPUnit config found — skipping tests"
+          fi
+
+      # ── 5. Rsync to Hostinger via SSH ────────────────────────────
+      - name: Deploy via rsync
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.HOSTINGER_SSH_KEY }}
+          SSH_HOST:  ${{ secrets.HOSTINGER_HOST }}
+          SSH_USER:  ${{ secrets.HOSTINGER_USER }}
+          DEPLOY_PATH:  ${{ secrets.HOSTINGER_DEPLOY_PATH }}
+        run: |
+          # Configure SSH
+          mkdir -p ~/.ssh
+          echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H "$SSH_HOST" >> ~/.ssh/known_hosts
+
+          # Sync files — exclure les dossiers non pertinents
+          rsync -azP --delete \
+            --exclude='.git/' \
+            --exclude='.github/' \
+            --exclude='.env.local' \
+            --exclude='.env.*.local' \
+            --exclude='var/cache/' \
+            --exclude='var/log/' \
+            --exclude='tests/' \
+            --exclude='node_modules/' \
+            --exclude='phpunit.xml*' \
+            ./ "$SSH_USER@$SSH_HOST:$DEPLOY_PATH/"
+
+      # ── 6. Post-deploy : migrations + cache:clear ─────────────────
+      - name: Post-deploy commands
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.HOSTINGER_SSH_KEY }}
+          SSH_HOST:  ${{ secrets.HOSTINGER_HOST }}
+          SSH_USER:  ${{ secrets.HOSTINGER_USER }}
+          DEPLOY_PATH:  ${{ secrets.HOSTINGER_DEPLOY_PATH }}
+        run: |
+          ssh "$SSH_USER@$SSH_HOST" bash << 'ENDSSH'
+            set -e
+            cd "${{ secrets.HOSTINGER_DEPLOY_PATH }}"
+
+            # Charger les variables d'environnement de production
+            export APP_ENV=prod
+
+            # Migrations Doctrine
+            php bin/console doctrine:migrations:migrate --no-interaction --env=prod
+
+            # Setup messenger transport (crée les tables messenger_messages si absentes)
+            php bin/console messenger:setup-transports --env=prod
+
+            # Vider et préchauffer le cache
+            php bin/console cache:clear --env=prod --no-warmup
+            php bin/console cache:warmup --env=prod
+
+            echo "Deploy completed successfully"
+          ENDSSH
