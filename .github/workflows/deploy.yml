@@ -41,22 +41,35 @@ jobs:
             echo "No PHPUnit config found — skipping tests"
           fi
 
-      # ── 5. Rsync to Hostinger via SSH ────────────────────────────
-      - name: Deploy via rsync
+      # ── 5. Generate front controller for the public document root ─
+      # DEPLOY_PATH (public_html/acquis) EST le document root exposé (pas de
+      # sous-dossier public/ possible sur ce plan Hostinger) → le code
+      # applicatif est déployé HORS de public_html, dans APP_PATH, et seul
+      # un index.php généré dans DEPLOY_PATH pointe dessus.
+      - name: Generate patched index.php
         env:
-          SSH_PRIVATE_KEY: ${{ secrets.HOSTINGER_SSH_KEY }}
-          SSH_HOST:  ${{ secrets.HOSTINGER_HOST }}
-          SSH_USER:  ${{ secrets.HOSTINGER_USER }}
-          DEPLOY_PATH:  ${{ secrets.HOSTINGER_DEPLOY_PATH }}
+          APP_PATH: ${{ secrets.APP_PATH }}
         run: |
-          # Configure SSH
+          sed "s|__APP_ROOT__|${APP_PATH}|g" deploy/hostinger/index.php.template > /tmp/index.php
+
+      # ── 6. Rsync application code (privé, hors public_html) ──────
+      - name: Deploy app code via rsync
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          SSH_HOST:  ${{ secrets.SSH_HOST }}
+          SSH_PORT:  ${{ secrets.SSH_PORT }}
+          SSH_USER:  ${{ secrets.SSH_USER }}
+          APP_PATH:  ${{ secrets.APP_PATH }}
+        run: |
           mkdir -p ~/.ssh
           echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
-          ssh-keyscan -H "$SSH_HOST" >> ~/.ssh/known_hosts
+          ssh-keyscan -p "$SSH_PORT" -H "$SSH_HOST" >> ~/.ssh/known_hosts
 
-          # Sync files — exclure les dossiers non pertinents
+          ssh -p "$SSH_PORT" "$SSH_USER@$SSH_HOST" "mkdir -p '$APP_PATH'"
+
           rsync -azP --delete \
+            -e "ssh -p $SSH_PORT" \
             --exclude='.git/' \
             --exclude='.github/' \
             --exclude='.env.local' \
@@ -66,30 +79,42 @@ jobs:
             --exclude='tests/' \
             --exclude='node_modules/' \
             --exclude='phpunit.xml*' \
-            ./ "$SSH_USER@$SSH_HOST:$DEPLOY_PATH/"
+            --exclude='public/' \
+            ./ "$SSH_USER@$SSH_HOST:$APP_PATH/"
 
-      # ── 6. Post-deploy : migrations + cache:clear ─────────────────
+      # ── 7. Rsync assets publics (css/js/images) vers public_html/acquis ─
+      - name: Deploy public assets via rsync
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          SSH_HOST:     ${{ secrets.SSH_HOST }}
+          SSH_PORT:     ${{ secrets.SSH_PORT }}
+          SSH_USER:     ${{ secrets.SSH_USER }}
+          DEPLOY_PATH:  ${{ secrets.DEPLOY_PATH }}
+        run: |
+          rsync -azP --delete \
+            -e "ssh -p $SSH_PORT" \
+            --exclude='index.php' \
+            public/ "$SSH_USER@$SSH_HOST:$DEPLOY_PATH/"
+
+          # Déposer le front controller patché (chemin app code injecté)
+          scp -P "$SSH_PORT" /tmp/index.php "$SSH_USER@$SSH_HOST:$DEPLOY_PATH/index.php"
+
+      # ── 8. Post-deploy : migrations + cache:clear ─────────────────
       - name: Post-deploy commands
         env:
-          SSH_PRIVATE_KEY: ${{ secrets.HOSTINGER_SSH_KEY }}
-          SSH_HOST:  ${{ secrets.HOSTINGER_HOST }}
-          SSH_USER:  ${{ secrets.HOSTINGER_USER }}
-          DEPLOY_PATH:  ${{ secrets.HOSTINGER_DEPLOY_PATH }}
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          SSH_HOST:  ${{ secrets.SSH_HOST }}
+          SSH_PORT:  ${{ secrets.SSH_PORT }}
+          SSH_USER:  ${{ secrets.SSH_USER }}
+          APP_PATH:  ${{ secrets.APP_PATH }}
         run: |
-          ssh "$SSH_USER@$SSH_HOST" bash << 'ENDSSH'
+          ssh -p "$SSH_PORT" "$SSH_USER@$SSH_HOST" "APP_PATH='$APP_PATH' bash -s" << 'ENDSSH'
             set -e
-            cd "${{ secrets.HOSTINGER_DEPLOY_PATH }}"
-
-            # Charger les variables d'environnement de production
+            cd "$APP_PATH"
             export APP_ENV=prod
 
-            # Migrations Doctrine
             php bin/console doctrine:migrations:migrate --no-interaction --env=prod
-
-            # Setup messenger transport (crée les tables messenger_messages si absentes)
             php bin/console messenger:setup-transports --env=prod
-
-            # Vider et préchauffer le cache
             php bin/console cache:clear --env=prod --no-warmup
             php bin/console cache:warmup --env=prod
 

@@ -29,3 +29,5 @@ Thumbs.db
 
 # Logs
 *.log
+deploy_key
+deploy_key.pub

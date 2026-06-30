@@ -1,4 +1,6 @@
 {
+    "name": "massagrafik/acquisapp",
+    "description": "AcquisApp — plateforme d'apprentissage assistée par IA (Massagrafik)",
     "type": "project",
     "license": "proprietary",
     "minimum-stability": "stable",

@@ -1,0 +1,12 @@
+<?php
+// Front controller déployé dans public_html/acquis/ — généré depuis ce template
+// par le pipeline CI. Le code applicatif (src/, vendor/, .env.local) vit HORS
+// du document root, dans __APP_ROOT__, pour ne jamais être exposé publiquement.
+
+use App\Kernel;
+
+require_once '__APP_ROOT__/vendor/autoload_runtime.php';
+
+return static function (array $context) {
+    return new Kernel($context['APP_ENV'], (bool) $context['APP_DEBUG']);
+};
