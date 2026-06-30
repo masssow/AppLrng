@@ -62,14 +62,12 @@ jobs:
           mkdir -p ~/.ssh
           echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
-          cat >> ~/.ssh/config <<-EOF
-          Host hostinger
-            HostName $SSH_HOST
-            User $SSH_USER
-            Port $SSH_PORT
-            IdentityFile ~/.ssh/id_rsa
-            StrictHostKeyChecking no
-          EOF
+          echo "Host hostinger"            >> ~/.ssh/config
+          echo "  HostName $SSH_HOST"      >> ~/.ssh/config
+          echo "  User $SSH_USER"          >> ~/.ssh/config
+          echo "  Port $SSH_PORT"          >> ~/.ssh/config
+          echo "  IdentityFile ~/.ssh/id_rsa" >> ~/.ssh/config
+          echo "  StrictHostKeyChecking no"   >> ~/.ssh/config
           chmod 600 ~/.ssh/config
           echo "SSH configured — host=$SSH_HOST port=$SSH_PORT user=$SSH_USER"
 
