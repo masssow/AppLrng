@@ -8,6 +8,13 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    env:
+      SSH_HOST: ${{ secrets.SSH_HOST }}
+      SSH_PORT: ${{ secrets.SSH_PORT }}
+      SSH_USER: ${{ secrets.SSH_USER }}
+      SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+      APP_PATH: ${{ secrets.APP_PATH }}
+      DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
 
     steps:
       - uses: actions/checkout@v4
@@ -23,33 +30,34 @@ jobs:
       - name: Configure SSH
         run: |
           mkdir -p ~/.ssh
-          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
-          echo "Host hostinger" >> ~/.ssh/config
-          echo "  HostName ${{ secrets.SSH_HOST }}" >> ~/.ssh/config
-          echo "  User ${{ secrets.SSH_USER }}" >> ~/.ssh/config
-          echo "  Port ${{ secrets.SSH_PORT }}" >> ~/.ssh/config
+          echo "Host hostinger"               >> ~/.ssh/config
+          echo "  HostName $SSH_HOST"         >> ~/.ssh/config
+          echo "  User $SSH_USER"             >> ~/.ssh/config
+          echo "  Port $SSH_PORT"             >> ~/.ssh/config
           echo "  IdentityFile ~/.ssh/id_rsa" >> ~/.ssh/config
-          echo "  StrictHostKeyChecking no" >> ~/.ssh/config
+          echo "  StrictHostKeyChecking no"   >> ~/.ssh/config
+          chmod 600 ~/.ssh/config
 
       - name: Deploy
         run: |
-          ssh hostinger "mkdir -p ${{ secrets.APP_PATH }}"
+          ssh hostinger "mkdir -p $APP_PATH"
           rsync -az --delete \
             --exclude='.git/' --exclude='.github/' \
             --exclude='.env.local' --exclude='var/' \
             --exclude='node_modules/' --exclude='public/' \
-            ./ "hostinger:${{ secrets.APP_PATH }}/"
+            ./ "hostinger:$APP_PATH/"
           rsync -az --delete \
             --exclude='index.php' \
-            public/ "hostinger:${{ secrets.DEPLOY_PATH }}/"
-          sed "s|__APP_ROOT__|${{ secrets.APP_PATH }}|g" deploy/hostinger/index.php.template \
-            | ssh hostinger "cat > ${{ secrets.DEPLOY_PATH }}/index.php"
+            public/ "hostinger:$DEPLOY_PATH/"
+          sed "s|__APP_ROOT__|$APP_PATH|g" deploy/hostinger/index.php.template \
+            | ssh hostinger "cat > $DEPLOY_PATH/index.php"
 
       - name: Post-deploy
         run: |
           ssh hostinger "
-            cd ${{ secrets.APP_PATH }}
+            cd $APP_PATH
             php bin/console doctrine:migrations:migrate --no-interaction --allow-no-migration --env=prod
             php bin/console cache:clear --env=prod --no-warmup
             php bin/console cache:warmup --env=prod
