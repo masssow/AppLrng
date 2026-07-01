@@ -70,3 +70,17 @@
     {{ form_end(form) }}
 </main>
 {% endblock %}
+
+{% block javascripts %}
+{{ parent() }}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const notes = localStorage.getItem('notes-ressource-{{ ressource.id }}');
+    if (!notes) return;
+    const field = document.querySelector('[name$="[compris]"]');
+    if (field && !field.value) {
+        field.value = notes;
+    }
+});
+</script>
+{% endblock %}

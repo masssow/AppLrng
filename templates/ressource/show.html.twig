@@ -75,27 +75,76 @@
     </a>
     {% endif %}
 
-    {% if ressource.pomodorosSuggeres %}
-    <div class="mb-6">
-        <p class="text-xs text-white/40 uppercase tracking-wide mb-3">{{ 'ressource.pomodoros_plan'|trans }}</p>
-        <div class="flex flex-wrap gap-2">
-            {% for i in 1..ressource.pomodorosSuggeres %}
-            <div class="flex flex-col items-center bg-white/5 border border-white/10 rounded-xl px-4 py-3 min-w-[76px]">
-                <span class="text-lg">🍅</span>
-                <span class="text-xs text-white/60 mt-1">{{ i }}</span>
-                {% if ressource.dureeEstimeeMinutes %}
-                <span class="text-xs text-white/25 mt-0.5">{{ ((i-1)*25) }}–{{ (i*25) }} min</span>
-                {% endif %}
-            </div>
-            {% endfor %}
-        </div>
-    </div>
-    {% endif %}
+    {# ── Timer Pomodoro AlpineJS ── #}
+    <div x-data="pomodoro('{{ ressource.id }}', {{ ressource.pomodorosSuggeres|default(4) }})" x-init="init()" class="mb-6">
 
-    <a href="{{ path('app_consolidation_initier', {'id': ressource.id}) }}"
-       class="block w-full bg-[#6C63FF] hover:bg-[#5a52e0] text-white py-3 rounded-xl font-semibold transition text-sm text-center">
-        {{ 'ressource.consolidate_now'|trans }}
-    </a>
+        {# EN ATTENTE #}
+        <div x-show="sousEtat === 'en_attente'" class="bg-white/5 rounded-2xl p-6 text-center">
+            <p class="text-4xl mb-3">🍅</p>
+            <p class="text-white/60 text-sm mb-1">{{ ressource.pomodorosSuggeres|default(4) }} × 25 min</p>
+            <p class="text-white/30 text-xs mb-5">≈ {{ (ressource.pomodorosSuggeres|default(4)) * 25 }} min au total</p>
+            <button @click="demarrer()"
+                class="bg-[#6C63FF] hover:bg-[#5a52e0] text-white px-8 py-3 rounded-xl font-semibold transition text-sm">
+                🍅 Démarrer
+            </button>
+        </div>
+
+        {# EN COURS #}
+        <div x-show="sousEtat === 'en_cours'" class="bg-blue-900/20 border border-blue-700/30 rounded-2xl p-6 text-center">
+            <p class="text-xs text-blue-300/60 uppercase tracking-wider mb-2">Pomodoro <span x-text="pomodoroActuel"></span> / <span x-text="pomodorosTotal"></span></p>
+            <p class="text-6xl font-mono font-bold text-blue-300 mb-5" x-text="affichageTemps()"></p>
+            <div class="flex gap-3 justify-center">
+                <button @click="pause()"
+                    class="bg-white/10 hover:bg-white/20 text-white px-5 py-2 rounded-xl text-sm transition">
+                    ⏸ Pause
+                </button>
+                <button @click="arreter()"
+                    class="bg-white/5 hover:bg-white/10 text-white/50 px-5 py-2 rounded-xl text-sm transition">
+                    ⏹ Arrêter
+                </button>
+            </div>
+        </div>
+
+        {# PAUSE #}
+        <div x-show="sousEtat === 'pause'" class="bg-yellow-900/20 border border-yellow-700/30 rounded-2xl p-6 text-center">
+            <p class="text-xs text-yellow-300/60 uppercase tracking-wider mb-2">Pause · Pomodoro <span x-text="pomodoroActuel"></span> / <span x-text="pomodorosTotal"></span></p>
+            <p class="text-6xl font-mono font-bold text-yellow-300 mb-5" x-text="affichageTemps()"></p>
+            <button @click="reprendre()"
+                class="bg-[#6C63FF] hover:bg-[#5a52e0] text-white px-8 py-3 rounded-xl font-semibold transition text-sm">
+                ▶ Reprendre
+            </button>
+        </div>
+
+        {# TERMINÉ #}
+        <div x-show="sousEtat === 'termine'" class="bg-green-900/20 border border-green-700/30 rounded-2xl p-6 text-center">
+            <p class="text-4xl mb-3">✅</p>
+            <p class="font-semibold text-green-300 mb-1">Session terminée !</p>
+            <p class="text-white/40 text-sm mb-5">{{ ressource.pomodorosSuggeres|default(4) }} pomodoros complétés</p>
+            <a href="{{ path('app_consolidation_initier', {'id': ressource.id}) }}"
+               class="block bg-[#6C63FF] hover:bg-[#5a52e0] text-white px-8 py-3 rounded-xl font-semibold transition text-sm">
+                ✨ Consolider maintenant
+            </a>
+        </div>
+
+        {# Notes — toujours visibles sauf si terminé #}
+        <div x-show="sousEtat !== 'termine'" class="mt-4">
+            <label class="block text-xs text-white/40 mb-2 uppercase tracking-wide">📝 Mes notes</label>
+            <textarea x-model="notes" @input="sauvegarderNotes()"
+                rows="4" placeholder="Notez ce que vous comprenez au fil de la lecture…"
+                class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-[#6C63FF] resize-none placeholder-white/20">
+            </textarea>
+            <p class="text-xs text-white/20 mt-1">Sauvegardé automatiquement</p>
+        </div>
+
+        {# CTA Consolider — accessible à tout moment #}
+        <div x-show="sousEtat !== 'termine'" class="mt-4">
+            <a href="{{ path('app_consolidation_initier', {'id': ressource.id}) }}"
+               class="block w-full text-center text-sm text-white/40 hover:text-white/70 py-2 border border-white/10 rounded-xl transition">
+                {{ 'ressource.consolidate_now'|trans }}
+            </a>
+        </div>
+
+    </div>
 
     {# ─── ÉTAT C : VUE ─────────────────────────────────── #}
     {% elseif statut == 'vue' %}
@@ -192,4 +241,124 @@
     {% endif %}
 
 </main>
+{% endblock %}
+
+{% block javascripts %}
+{{ parent() }}
+<script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+<script>
+function pomodoro(ressourceId, pomodorosTotal) {
+    return {
+        ressourceId,
+        pomodorosTotal,
+        pomodoroActuel: 1,
+        sousEtat: 'en_attente',
+        secondes: 1500,
+        timerInterval: null,
+        notes: '',
+        storageKey: 'pomodoro-ressource-' + ressourceId,
+        notesKey: 'notes-ressource-' + ressourceId,
+
+        init() {
+            this.notes = localStorage.getItem(this.notesKey) || '';
+            const saved = localStorage.getItem(this.storageKey);
+            if (saved) {
+                const data = JSON.parse(saved);
+                this.sousEtat = data.sousEtat;
+                this.pomodoroActuel = data.pomodoroActuel || 1;
+                if (data.sousEtat === 'en_cours' || data.sousEtat === 'pause') {
+                    const elapsed = Math.floor((Date.now() - data.startedAt) / 1000);
+                    this.secondes = Math.max(0, data.secondesSaved - elapsed);
+                    if (this.secondes > 0) {
+                        this.lancerInterval();
+                    } else {
+                        this.finirPeriode();
+                    }
+                }
+            }
+            setInterval(() => this.sauvegarderNotes(), 5000);
+        },
+
+        demarrer() {
+            this.sousEtat = 'en_cours';
+            this.secondes = 1500;
+            this.lancerInterval();
+            this.sauvegarderEtat();
+        },
+
+        pause() {
+            clearInterval(this.timerInterval);
+            this.sousEtat = 'pause';
+            this.secondes = 300;
+            this.lancerInterval();
+            this.sauvegarderEtat();
+        },
+
+        reprendre() {
+            this.sousEtat = 'en_cours';
+            this.secondes = 1500;
+            this.lancerInterval();
+            this.sauvegarderEtat();
+        },
+
+        arreter() {
+            clearInterval(this.timerInterval);
+            this.sousEtat = 'en_attente';
+            this.secondes = 1500;
+            localStorage.removeItem(this.storageKey);
+        },
+
+        lancerInterval() {
+            clearInterval(this.timerInterval);
+            this.timerInterval = setInterval(() => {
+                this.secondes--;
+                if (this.secondes % 10 === 0) this.sauvegarderEtat();
+                if (this.secondes <= 0) {
+                    clearInterval(this.timerInterval);
+                    this.finirPeriode();
+                }
+            }, 1000);
+        },
+
+        finirPeriode() {
+            if (this.sousEtat === 'en_cours') {
+                if (this.pomodoroActuel >= this.pomodorosTotal) {
+                    this.sousEtat = 'termine';
+                    localStorage.removeItem(this.storageKey);
+                } else {
+                    this.pomodoroActuel++;
+                    this.sousEtat = 'pause';
+                    this.secondes = 300;
+                    this.lancerInterval();
+                    this.sauvegarderEtat();
+                }
+            } else if (this.sousEtat === 'pause') {
+                this.sousEtat = 'en_cours';
+                this.secondes = 1500;
+                this.lancerInterval();
+                this.sauvegarderEtat();
+            }
+        },
+
+        sauvegarderEtat() {
+            localStorage.setItem(this.storageKey, JSON.stringify({
+                sousEtat: this.sousEtat,
+                pomodoroActuel: this.pomodoroActuel,
+                secondesSaved: this.secondes,
+                startedAt: Date.now(),
+            }));
+        },
+
+        sauvegarderNotes() {
+            if (this.notes) localStorage.setItem(this.notesKey, this.notes);
+        },
+
+        affichageTemps() {
+            const m = Math.floor(this.secondes / 60);
+            const s = this.secondes % 60;
+            return String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
+        },
+    };
+}
+</script>
 {% endblock %}
