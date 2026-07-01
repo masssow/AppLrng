@@ -161,7 +161,7 @@ flash:
     ressource_added: Ressource ajoutée !
     csrf_error: Token de sécurité invalide. Réessayez.
     registration_success: Compte créé avec succès ! Connectez-vous.
-    parcours_created: "Parcours créé ! L'IA structure votre parcours en arrière-plan."
+    parcours_created: "Parcours créé ! Ajoutez vos ressources puis lancez la structuration IA."
     parcours_deleted: Parcours supprimé.
     consolidation_initiated: "Session de consolidation initiée. Génération en cours..."
     session_completed: Session terminée !

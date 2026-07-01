@@ -161,7 +161,7 @@ flash:
     ressource_added: "¡Recurso añadido!"
     csrf_error: Token de seguridad inválido. Inténtalo de nuevo.
     registration_success: "¡Cuenta creada! Inicia sesión."
-    parcours_created: "¡Recorrido creado! La IA lo está estructurando."
+    parcours_created: "¡Recorrido creado! Añade recursos y lanza la estructuración IA."
     parcours_deleted: Recorrido eliminado.
     consolidation_initiated: "Sesión iniciada. Generando..."
     session_completed: "¡Sesión completada!"
