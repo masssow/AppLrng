@@ -35,7 +35,7 @@ class RessourceRepository extends ServiceEntityRepository implements RessourceRe
             ->andWhere('p.user = :user')
             ->andWhere('p.deletedAt IS NULL')
             ->setParameter('id', $id, 'uuid')
-            ->setParameter('user', $user)
+            ->setParameter('user', $user->getId(), 'uuid')
             ->getQuery()
             ->getOneOrNullResult();
     }
@@ -48,7 +48,7 @@ class RessourceRepository extends ServiceEntityRepository implements RessourceRe
             ->andWhere('p.user = :user')
             ->orderBy('r.ordre', 'ASC')
             ->setParameter('parcoursId', $parcoursId, 'uuid')
-            ->setParameter('user', $user)
+            ->setParameter('user', $user->getId(), 'uuid')
             ->getQuery()
             ->getResult();
     }

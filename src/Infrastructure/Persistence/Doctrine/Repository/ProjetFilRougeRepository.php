@@ -35,7 +35,7 @@ class ProjetFilRougeRepository extends ServiceEntityRepository implements Projet
             ->andWhere('pc.user = :user')
             ->andWhere('pc.deletedAt IS NULL')
             ->setParameter('parcoursId', $parcoursId, 'uuid')
-            ->setParameter('user', $user)
+            ->setParameter('user', $user->getId(), 'uuid')
             ->getQuery()
             ->getOneOrNullResult();
     }

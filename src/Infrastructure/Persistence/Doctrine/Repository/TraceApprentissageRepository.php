@@ -34,7 +34,7 @@ class TraceApprentissageRepository extends ServiceEntityRepository implements Tr
             ->andWhere('t.user = :user')
             ->orderBy('t.createdAt', 'DESC')
             ->setParameter('ressourceId', $ressourceId, 'uuid')
-            ->setParameter('user', $user)
+            ->setParameter('user', $user->getId(), 'uuid')
             ->getQuery()
             ->getResult();
     }

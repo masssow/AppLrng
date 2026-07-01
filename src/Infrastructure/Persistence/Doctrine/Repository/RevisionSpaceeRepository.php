@@ -35,7 +35,7 @@ class RevisionSpaceeRepository extends ServiceEntityRepository implements Revisi
             ->andWhere('r.datePrevue <= :date')
             ->andWhere('r.completeeAt IS NULL')
             ->orderBy('r.datePrevue', 'ASC')
-            ->setParameter('user', $user)
+            ->setParameter('user', $user->getId(), 'uuid')
             ->setParameter('date', $date)
             ->getQuery()
             ->getResult();
@@ -58,7 +58,7 @@ class RevisionSpaceeRepository extends ServiceEntityRepository implements Revisi
             ->where('r.user = :user')
             ->andWhere('r.completeeAt IS NOT NULL')
             ->andWhere('r.completeeAt >= :depuis')
-            ->setParameter('user', $user)
+            ->setParameter('user', $user->getId(), 'uuid')
             ->setParameter('depuis', $depuis)
             ->getQuery()
             ->getArrayResult();

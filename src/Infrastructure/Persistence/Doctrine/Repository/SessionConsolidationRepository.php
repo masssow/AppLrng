@@ -38,7 +38,7 @@ class SessionConsolidationRepository extends ServiceEntityRepository implements 
             ->andWhere('p.user = :user')
             ->orderBy('s.createdAt', 'DESC')
             ->setParameter('ressourceId', $ressourceId, 'uuid')
-            ->setParameter('user', $user)
+            ->setParameter('user', $user->getId(), 'uuid')
             ->getQuery()
             ->getResult();
     }
@@ -65,7 +65,7 @@ class SessionConsolidationRepository extends ServiceEntityRepository implements 
             ->andWhere('s.statut = :statut')
             ->orderBy('s.createdAt', 'ASC')
             ->setMaxResults(1)
-            ->setParameter('user', $user)
+            ->setParameter('user', $user->getId(), 'uuid')
             ->setParameter('statut', \App\Domain\Consolidation\Enum\StatutSession::PRET)
             ->getQuery()
             ->getOneOrNullResult();
@@ -80,7 +80,7 @@ class SessionConsolidationRepository extends ServiceEntityRepository implements 
             ->where('p.user = :user')
             ->andWhere('s.completedAt IS NOT NULL')
             ->andWhere('s.completedAt >= :depuis')
-            ->setParameter('user', $user)
+            ->setParameter('user', $user->getId(), 'uuid')
             ->setParameter('depuis', $depuis)
             ->getQuery()
             ->getArrayResult();

@@ -59,7 +59,7 @@ class MicroEtapeRepository extends ServiceEntityRepository implements MicroEtape
             ->andWhere('e.statut = :statut')
             ->orderBy('e.debloqueeAt', 'ASC')
             ->setMaxResults(1)
-            ->setParameter('user', $user)
+            ->setParameter('user', $user->getId(), 'uuid')
             ->setParameter('statut', StatutEtape::EN_COURS)
             ->getQuery()
             ->getOneOrNullResult();
@@ -74,7 +74,7 @@ class MicroEtapeRepository extends ServiceEntityRepository implements MicroEtape
             ->where('p.user = :user')
             ->andWhere('e.completedAt IS NOT NULL')
             ->andWhere('e.completedAt >= :depuis')
-            ->setParameter('user', $user)
+            ->setParameter('user', $user->getId(), 'uuid')
             ->setParameter('depuis', $depuis)
             ->getQuery()
             ->getArrayResult();

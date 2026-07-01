@@ -36,7 +36,7 @@ class ParcoursRepository extends ServiceEntityRepository implements ParcoursRepo
             ->andWhere('p.user = :user')
             ->andWhere('p.deletedAt IS NULL')
             ->setParameter('id', $id, 'uuid')
-            ->setParameter('user', $user)
+            ->setParameter('user', $user->getId(), 'uuid')
             ->getQuery()
             ->getOneOrNullResult();
     }
@@ -47,7 +47,7 @@ class ParcoursRepository extends ServiceEntityRepository implements ParcoursRepo
             ->where('p.user = :user')
             ->andWhere('p.deletedAt IS NULL')
             ->orderBy('p.createdAt', 'DESC')
-            ->setParameter('user', $user)
+            ->setParameter('user', $user->getId(), 'uuid')
             ->getQuery()
             ->getResult();
     }
@@ -58,7 +58,7 @@ class ParcoursRepository extends ServiceEntityRepository implements ParcoursRepo
             ->where('p.user = :user')
             ->andWhere('p.statut = :statut')
             ->andWhere('p.deletedAt IS NULL')
-            ->setParameter('user', $user)
+            ->setParameter('user', $user->getId(), 'uuid')
             ->setParameter('statut', StatutParcours::ACTIF)
             ->getQuery()
             ->getResult();
