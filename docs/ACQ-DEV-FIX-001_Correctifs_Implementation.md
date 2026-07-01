@@ -505,6 +505,44 @@ Remplacement du tableau de bord minimal par une structure priorisée. Aucune nou
 
 ---
 
+## 34. Auto-remplissage métadonnées URL dans le formulaire ressource — Sprint 3.3
+
+**Sprint 3.3 — 2026-07-01**
+
+**Objectif** : réduire la friction lors de l'ajout d'une ressource en pré-remplissant titre et durée depuis l'URL.
+
+**Fix** :
+
+### Backend — `GET /ressource/fetch-metadata`
+
+Nouvelle méthode `fetchMetadata()` dans `RessourceController` :
+- Valide l'URL avec `filter_var(..., FILTER_VALIDATE_URL)`
+- Appel via `HttpClientInterface` (timeout 5s, User-Agent générique)
+- Extraction par regex : `og:title` → `<title>` (fallback), `lengthSeconds` (YouTube) → `meta[name=duration]`
+- Retourne `JsonResponse({ titre, duree })` — champs absents si non trouvés
+- Tout echec (`\Throwable`) → retourne `{}` sans exception
+
+```php
+#[Route('/fetch-metadata', name: 'app_ressource_fetch_metadata', methods: ['GET'])]
+public function fetchMetadata(Request $request, HttpClientInterface $httpClient): JsonResponse
+```
+
+**Important** : la route `/ressource/fetch-metadata` doit être déclarée AVANT `/{id}` dans le controller — Symfony match les routes dans l'ordre de déclaration.
+
+### Frontend — `parcours/show.html.twig`
+
+- Champ `url` déplacé en première position dans le formulaire inline
+- Composant Alpine `metadataFetch()` sur le `<form>` :
+  - `@blur` sur le champ URL → `fetchMeta()` si URL commence par `http`
+  - `fetch('/ressource/fetch-metadata?url=...')` avec `encodeURIComponent`
+  - Pré-remplit `titre` et `duree` **uniquement si les champs sont vides** (ne remplace pas une saisie manuelle)
+  - Indicateur `x-show="loading"` : "⏳ Récupération des infos..."
+  - Échec silencieux (catch vide) — l'utilisateur continue manuellement
+
+**Fichiers** : `src/Http/Controller/RessourceController.php`, `templates/parcours/show.html.twig`
+
+---
+
 ## Checklist post-installation
 
 ```bash
