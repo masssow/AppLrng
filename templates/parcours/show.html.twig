@@ -104,34 +104,41 @@
             <summary class="px-4 py-3 cursor-pointer text-sm text-[#6C63FF] hover:bg-white/5 list-none flex items-center gap-2 select-none">
                 <span class="text-lg">＋</span> {{ 'parcours.add_ressource'|trans }}
             </summary>
-            <form method="post" action="{{ path('app_ressource_ajouter', {'id': parcours.id}) }}" class="p-4 space-y-3 border-t border-white/10">
+            <form method="post" action="{{ path('app_ressource_ajouter', {'id': parcours.id}) }}"
+                  x-data="metadataFetch()"
+                  class="p-4 space-y-3 border-t border-white/10">
                 <input type="hidden" name="_token" value="{{ csrf_token('add-ressource-' ~ parcours.id) }}">
                 <div>
+                    <label class="block text-xs text-white/60 mb-1">{{ 'form.url'|trans }} <span class="text-white/30">({{ 'form.optional'|trans }})</span></label>
+                    <input type="url" name="url" x-model="url" @blur="fetchMeta()"
+                        class="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-[#6C63FF]"
+                        placeholder="https://...">
+                    <p x-show="loading" class="text-xs text-white/30 mt-1">⏳ Récupération des infos...</p>
+                </div>
+                <div>
                     <label class="block text-xs text-white/60 mb-1">{{ 'form.titre'|trans }}</label>
-                    <input type="text" name="titre" required
+                    <input type="text" name="titre" x-model="titre" required
                         class="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-[#6C63FF]">
                 </div>
                 <div class="grid grid-cols-2 gap-3">
                     <div>
                         <label class="block text-xs text-white/60 mb-1">{{ 'form.type'|trans }}</label>
-                        <select name="type" class="w-full bg-[#1a1a2e] border border-white/20 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-[#6C63FF]">
-                            <option value="VIDEO">🎬 {{ ('type.VIDEO')|trans }}</option>
-                            <option value="ARTICLE">📄 {{ ('type.ARTICLE')|trans }}</option>
-                            <option value="COURS" selected>📖 {{ ('type.COURS')|trans }}</option>
-                            <option value="PODCAST">🎙️ {{ ('type.PODCAST')|trans }}</option>
-                            <option value="LIVRE">📚 {{ ('type.LIVRE')|trans }}</option>
-                        </select>
+                        <div class="relative">
+                            <select name="type" class="w-full bg-[#1a1a2e] border border-white/20 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-[#6C63FF] pr-8">
+                                <option value="VIDEO">🎬 {{ ('type.VIDEO')|trans }}</option>
+                                <option value="ARTICLE">📄 {{ ('type.ARTICLE')|trans }}</option>
+                                <option value="COURS" selected>📖 {{ ('type.COURS')|trans }}</option>
+                                <option value="PODCAST">🎙️ {{ ('type.PODCAST')|trans }}</option>
+                                <option value="LIVRE">📚 {{ ('type.LIVRE')|trans }}</option>
+                            </select>
+                            <span class="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-white/40 text-xs">▾</span>
+                        </div>
                     </div>
                     <div>
                         <label class="block text-xs text-white/60 mb-1">{{ 'form.duree_minutes'|trans }}</label>
-                        <input type="number" name="duree" min="1" placeholder="60"
+                        <input type="number" name="duree" x-model="duree" min="1" placeholder="60"
                             class="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-[#6C63FF]">
                     </div>
-                </div>
-                <div>
-                    <label class="block text-xs text-white/60 mb-1">{{ 'form.url'|trans }} ({{ 'form.optional'|trans }})</label>
-                    <input type="url" name="url"
-                        class="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-[#6C63FF]">
                 </div>
                 <button type="submit" class="w-full bg-[#6C63FF] hover:bg-[#5a52e0] text-white text-sm py-2 rounded-lg transition">
                     {{ 'action.add'|trans }}
@@ -182,4 +189,34 @@
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block javascripts %}
+{{ parent() }}
+<script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+<script>
+function metadataFetch() {
+    return {
+        url: '',
+        titre: '',
+        duree: '',
+        loading: false,
+        async fetchMeta() {
+            if (!this.url || !this.url.startsWith('http')) return;
+            this.loading = true;
+            try {
+                const res = await fetch('/ressource/fetch-metadata?url=' + encodeURIComponent(this.url));
+                if (!res.ok) return;
+                const data = await res.json();
+                if (data.titre && !this.titre) this.titre = data.titre;
+                if (data.duree && !this.duree) this.duree = data.duree;
+            } catch (e) {
+                // échec silencieux
+            } finally {
+                this.loading = false;
+            }
+        }
+    };
+}
+</script>
 {% endblock %}

@@ -14,11 +14,13 @@ use App\Domain\Shared\Entity\User;
 use App\Http\Voter\ParcoursVoter;
 use App\Http\Voter\RessourceVoter;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Component\Uid\Uuid;
+use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 #[IsGranted('ROLE_USER')]
 #[Route('/ressource')]
@@ -98,6 +100,43 @@ class RessourceController extends AbstractController
         $this->addFlash('success', 'flash.ressource_added');
 
         return $this->redirectToRoute('app_parcours_show', ['id' => $id]);
+    }
+
+    #[Route('/fetch-metadata', name: 'app_ressource_fetch_metadata', methods: ['GET'])]
+    public function fetchMetadata(Request $request, HttpClientInterface $httpClient): JsonResponse
+    {
+        $url = (string) $request->query->get('url', '');
+        if (!filter_var($url, FILTER_VALIDATE_URL)) {
+            return $this->json([]);
+        }
+
+        try {
+            $response = $httpClient->request('GET', $url, [
+                'timeout' => 5,
+                'headers' => ['User-Agent' => 'Mozilla/5.0 (compatible; AcquisApp/1.0)'],
+            ]);
+            $html = $response->getContent(false);
+        } catch (\Throwable) {
+            return $this->json([]);
+        }
+
+        $titre = null;
+        $duree = null;
+
+        if (preg_match('/<meta[^>]+property=["\']og:title["\'][^>]+content=["\'](.*?)["\']/', $html, $m)) {
+            $titre = html_entity_decode(trim($m[1]), ENT_QUOTES);
+        } elseif (preg_match('/<title[^>]*>(.*?)<\/title>/si', $html, $m)) {
+            $titre = html_entity_decode(trim(strip_tags($m[1])), ENT_QUOTES);
+        }
+
+        // YouTube duration from meta
+        if (preg_match('/"lengthSeconds"\s*:\s*"(\d+)"/', $html, $m)) {
+            $duree = (int) round((int) $m[1] / 60);
+        } elseif (preg_match('/<meta[^>]+name=["\']duration["\'][^>]+content=["\'](.*?)["\']/', $html, $m)) {
+            $duree = (int) $m[1];
+        }
+
+        return $this->json(array_filter(['titre' => $titre, 'duree' => $duree]));
     }
 
     #[Route('/{id}/demarrer', name: 'app_ressource_demarrer', methods: ['POST'])]
