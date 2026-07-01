@@ -110,10 +110,13 @@
                 <input type="hidden" name="_token" value="{{ csrf_token('add-ressource-' ~ parcours.id) }}">
                 <div>
                     <label class="block text-xs text-white/60 mb-1">{{ 'form.url'|trans }} <span class="text-white/30">({{ 'form.optional'|trans }})</span></label>
-                    <input type="url" name="url" x-model="url" @blur="fetchMeta()"
+                    <input type="url" name="url" x-model="url" @input="debounceFetch()"
                         class="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-[#6C63FF]"
                         placeholder="https://...">
-                    <p x-show="loading" class="text-xs text-white/30 mt-1">⏳ Récupération des infos...</p>
+                    <p x-show="loading" class="text-xs text-[#6C63FF]/70 mt-1 flex items-center gap-1">
+                        <span class="animate-spin inline-block">⏳</span> Récupération des infos…
+                    </p>
+                    <p x-show="filled && !loading" class="text-xs text-green-400/70 mt-1">✓ Titre et durée pré-remplis</p>
                 </div>
                 <div>
                     <label class="block text-xs text-white/60 mb-1">{{ 'form.titre'|trans }}</label>
@@ -201,8 +204,17 @@ function metadataFetch() {
         titre: '',
         duree: '',
         loading: false,
-        async fetchMeta() {
+        filled: false,
+        debounceTimer: null,
+
+        debounceFetch() {
+            this.filled = false;
+            clearTimeout(this.debounceTimer);
             if (!this.url || !this.url.startsWith('http')) return;
+            this.debounceTimer = setTimeout(() => this.fetchMeta(), 800);
+        },
+
+        async fetchMeta() {
             this.loading = true;
             try {
                 const res = await fetch('/ressource/fetch-metadata?url=' + encodeURIComponent(this.url));
@@ -210,6 +222,7 @@ function metadataFetch() {
                 const data = await res.json();
                 if (data.titre && !this.titre) this.titre = data.titre;
                 if (data.duree && !this.duree) this.duree = data.duree;
+                if (data.titre || data.duree) this.filled = true;
             } catch (e) {
                 // échec silencieux
             } finally {
