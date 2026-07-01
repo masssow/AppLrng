@@ -81,7 +81,7 @@ Propager `$langue` jusqu'à `AIOrchestrator` (signature de chaque méthode publi
 
 ---
 
-## Sprint 3 — Session d'apprentissage active
+## Sprint 3 — Session d'apprentissage active ✅ TERMINÉ (2026-07-01)
 **Objectif : le timer est interactif, les notes sont sauvegardées**
 
 ### 3.1 Timer Pomodoro AlpineJS

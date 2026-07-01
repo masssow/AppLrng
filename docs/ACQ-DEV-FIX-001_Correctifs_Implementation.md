@@ -450,6 +450,61 @@ Remplacement du tableau de bord minimal par une structure priorisée. Aucune nou
 
 ---
 
+## 31. Dispatch IA prématuré à la création de parcours
+
+**Sprint 2 — 2026-07-01**
+
+**Problème** : `ParcoursService::initier()` dispatchait `GenerationParcoursMessage` immédiatement après la création, alors que le parcours avait 0 ressource. L'IA recevait un parcours vide et ne pouvait rien structurer.
+
+**Fix** :
+- `initier()` : suppression du `$this->bus->dispatch(...)` → crée le parcours en BROUILLON sans dispatch
+- Nouvelle méthode `lancerStructuration(Parcours)` : vérifie `count(ressources) >= 1` avant de dispatcher
+- Nouvelle route `POST /parcours/{id}/structurer` (`app_parcours_structurer`) : vérif CSRF + statut BROUILLON + ressources >= 1
+- Template `parcours/show.html.twig` : bouton "✨ Structurer avec l'IA" affiché uniquement si `statut == 'brouillon'` ET `ressources|length >= 1`
+
+**Fichiers** : `src/Application/Parcours/Service/ParcoursService.php`, `src/Http/Controller/ParcoursController.php`, `templates/parcours/show.html.twig`
+
+---
+
+## 32. Variable d'env GROQ_API_KEY absente sur Hostinger
+
+**Déploiement pré-prod — 2026-07-01**
+
+**Problème** : `.env.local` sur le serveur contenait `ANTHROPIC_API_KEY=...` mais `services.yaml` attend `GROQ_API_KEY`. Le worker crashait silencieusement avec `Environment variable not found: "GROQ_API_KEY"`.
+
+**Fix** : renommer la variable dans `.env.local` sur le serveur : `ANTHROPIC_API_KEY` → `GROQ_API_KEY`.
+
+**Note** : les deux noms coexistent dans `services.yaml` (`ClaudeAdapter` = `ANTHROPIC_API_KEY`, `GroqAdapter` = `GROQ_API_KEY`). En prod, c'est `GroqAdapter` qui est utilisé via `IAGatewayInterface`.
+
+---
+
+## 33. Timer Pomodoro interactif — Sprint 3
+
+**Sprint 3 — 2026-07-01**
+
+**Objectif** : rendre la session d'étude active sans modification backend.
+
+**Fix** : remplacement du bloc statique EN_COURS dans `templates/ressource/show.html.twig` par un composant AlpineJS avec 4 sous-états :
+
+| Sous-état | Affichage |
+|---|---|
+| `en_attente` | Bouton "🍅 Démarrer" + N × 25 min |
+| `en_cours` | Compte à rebours 25:00 · Pomodoro X/N · ⏸ Pause · ⏹ Arrêter |
+| `pause` | Compte à rebours 5:00 (pause) · ▶ Reprendre |
+| `termine` | ✅ Session terminée · ✨ Consolider maintenant |
+
+**Persistance localStorage** (clé `pomodoro-ressource-{id}`) : au refresh, calcul du temps restant via `secondesSaved - (Date.now() - startedAt) / 1000`. Sauvegarde toutes les 10 secondes pendant le countdown.
+
+**Notes auto-sauvegardées** : textarea `x-model="notes"` avec `@input` + `setInterval(5000)` → clé `notes-ressource-{id}`.
+
+**Pré-remplissage consolidation** : `templates/consolidation/initier.html.twig` lit `localStorage['notes-ressource-{id}']` au `DOMContentLoaded` et pré-remplit `[name$="[compris]"]` si vide.
+
+**AlpineJS** : chargé via CDN dans `{% block javascripts %}{{ parent() }}` du template show (pas dans base.html.twig — évite de charger Alpine sur toutes les pages).
+
+**Fichiers** : `templates/ressource/show.html.twig`, `templates/consolidation/initier.html.twig`
+
+---
+
 ## Checklist post-installation
 
 ```bash
