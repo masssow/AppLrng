@@ -26,25 +26,34 @@
 
         <div>
             {{ form_label(form.domaine, null, {'label_attr': {'class': 'block text-sm text-white/70 mb-1'}}) }}
-            {{ form_widget(form.domaine, {'attr': {
-                'class': 'w-full bg-[#1a1a2e] border border-white/20 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-[#6C63FF] appearance-none cursor-pointer'
-            }}) }}
+            <div class="relative">
+                {{ form_widget(form.domaine, {'attr': {
+                    'class': 'w-full bg-[#1a1a2e] border border-white/20 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-[#6C63FF] pr-10'
+                }}) }}
+                <span class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-white/50">▾</span>
+            </div>
             {{ form_errors(form.domaine) }}
         </div>
 
         <div>
             {{ form_label(form.niveau, null, {'label_attr': {'class': 'block text-sm text-white/70 mb-1'}}) }}
-            {{ form_widget(form.niveau, {'attr': {
-                'class': 'w-full bg-[#1a1a2e] border border-white/20 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-[#6C63FF] appearance-none cursor-pointer'
-            }}) }}
+            <div class="relative">
+                {{ form_widget(form.niveau, {'attr': {
+                    'class': 'w-full bg-[#1a1a2e] border border-white/20 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-[#6C63FF] pr-10'
+                }}) }}
+                <span class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-white/50">▾</span>
+            </div>
             {{ form_errors(form.niveau) }}
         </div>
 
         <div>
             {{ form_label(form.modeAccompagnement, null, {'label_attr': {'class': 'block text-sm text-white/70 mb-1'}}) }}
-            {{ form_widget(form.modeAccompagnement, {'attr': {
-                'class': 'w-full bg-[#1a1a2e] border border-white/20 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-[#6C63FF] appearance-none cursor-pointer'
-            }}) }}
+            <div class="relative">
+                {{ form_widget(form.modeAccompagnement, {'attr': {
+                    'class': 'w-full bg-[#1a1a2e] border border-white/20 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-[#6C63FF] pr-10'
+                }}) }}
+                <span class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-white/50">▾</span>
+            </div>
             {{ form_errors(form.modeAccompagnement) }}
         </div>
 
