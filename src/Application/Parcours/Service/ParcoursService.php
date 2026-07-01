@@ -71,11 +71,18 @@ class ParcoursService
         $progression = new \App\Domain\Progression\Entity\Progression($parcours);
         $this->progressionRepository->save($progression);
 
-        $this->bus->dispatch(new GenerationParcoursMessage((string) $parcours->getId()));
-
         $this->parcoursRepository->save($parcours, true);
 
         return $parcours;
+    }
+
+    public function lancerStructuration(Parcours $parcours): void
+    {
+        if ($parcours->getRessources()->count() === 0) {
+            throw new \LogicException('Impossible de structurer un parcours sans ressources.');
+        }
+
+        $this->bus->dispatch(new GenerationParcoursMessage((string) $parcours->getId()));
     }
 
     public function passerActif(Parcours $parcours): void

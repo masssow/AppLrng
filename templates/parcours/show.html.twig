@@ -17,10 +17,13 @@
                 {% else %}bg-white/10 text-white/50{% endif %}">
                 {{ ('statut.' ~ parcours.statut.value)|trans }}
             </span>
-            {% if parcours.statut.value == 'brouillon' %}
-            <span class="text-xs text-yellow-400/70 flex items-center gap-1">
-                <span class="animate-pulse">⏳</span> {{ 'parcours.ia_processing'|trans }}
-            </span>
+            {% if parcours.statut.value == 'brouillon' and parcours.ressources|length >= 1 %}
+            <form method="post" action="{{ path('app_parcours_structurer', {id: parcours.id}) }}" class="inline">
+                <input type="hidden" name="_token" value="{{ csrf_token('structurer-' ~ parcours.id) }}">
+                <button type="submit" class="text-xs bg-[#6C63FF]/20 hover:bg-[#6C63FF]/40 text-[#a89fff] border border-[#6C63FF]/40 px-3 py-1 rounded-full transition flex items-center gap-1">
+                    ✨ Structurer avec l'IA
+                </button>
+            </form>
             {% endif %}
         </div>
         {% if parcours.objectif %}

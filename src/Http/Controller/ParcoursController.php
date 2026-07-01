@@ -6,6 +6,7 @@ namespace App\Http\Controller;
 
 use App\Application\Parcours\Service\ParcoursService;
 use App\Domain\Consolidation\Repository\SessionConsolidationRepositoryInterface;
+use App\Domain\Parcours\Enum\StatutParcours;
 use App\Domain\Parcours\Enum\StatutRessource;
 use App\Domain\Parcours\Repository\ParcoursRepositoryInterface;
 use App\Domain\Shared\Entity\User;
@@ -89,6 +90,40 @@ class ParcoursController extends AbstractController
             'parcours'             => $parcours,
             'dernieresSessionsMap' => $dernieresSessionsMap,
         ]);
+    }
+
+    #[Route('/{id}/structurer', name: 'app_parcours_structurer', methods: ['POST'])]
+    public function structurer(
+        string $id,
+        Request $request,
+        ParcoursRepositoryInterface $parcoursRepository,
+        ParcoursService $parcoursService,
+    ): Response {
+        $parcours = $parcoursRepository->findById(Uuid::fromString($id));
+        if ($parcours === null) {
+            throw $this->createNotFoundException();
+        }
+
+        $this->denyAccessUnlessGranted(ParcoursVoter::EDIT, $parcours);
+
+        if (!$this->isCsrfTokenValid('structurer-' . $id, (string) $request->request->get('_token'))) {
+            throw $this->createAccessDeniedException('Token CSRF invalide.');
+        }
+
+        if ($parcours->getStatut() !== StatutParcours::BROUILLON) {
+            $this->addFlash('warning', 'Ce parcours est déjà structuré ou en cours de structuration.');
+            return $this->redirectToRoute('app_parcours_show', ['id' => $id]);
+        }
+
+        if ($parcours->getRessources()->count() === 0) {
+            $this->addFlash('error', 'Ajoutez au moins une ressource avant de lancer la structuration.');
+            return $this->redirectToRoute('app_parcours_show', ['id' => $id]);
+        }
+
+        $parcoursService->lancerStructuration($parcours);
+
+        $this->addFlash('success', 'L\'IA structure votre parcours en arrière-plan.');
+        return $this->redirectToRoute('app_parcours_show', ['id' => $id]);
     }
 
     #[Route('/{id}/supprimer', name: 'app_parcours_delete', methods: ['POST'])]
