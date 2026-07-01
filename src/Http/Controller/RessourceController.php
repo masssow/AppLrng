@@ -26,7 +26,7 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
 #[Route('/ressource')]
 class RessourceController extends AbstractController
 {
-    #[Route('/{id}', name: 'app_ressource_show')]
+    #[Route('/{id}', name: 'app_ressource_show', requirements: ['id' => '[0-9a-f-]{36}'])]
     public function show(
         string $id,
         RessourceRepositoryInterface $ressourceRepository,
